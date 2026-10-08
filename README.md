@@ -2,9 +2,13 @@
 
 以新加坡 HDB 社区为场景的回合制城市经营 + 政策卡牌游戏的可交互 UI 原型。卡牌部分的界面与交互参照《杀戮尖塔》。
 
-## 打开方式
+## 在线试玩
 
-直接用浏览器打开 [`prototype/index.html`](prototype/index.html)，不需要安装任何东西。开启 GitHub Pages 后也可以在线游玩。
+**https://hdb-game.vercel.app**
+
+也可以下载 [`prototype/index.html`](prototype/index.html) 后直接用浏览器打开，不需要安装任何东西。
+
+推送到 `main` 后 Vercel 会自动重新部署；根目录的 `vercel.json` 把网站首页指向 `prototype/index.html`。
 
 ## 界面布局
 
