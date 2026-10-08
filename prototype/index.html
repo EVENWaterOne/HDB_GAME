@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* Layout: fixed 1280×760 game stage scaled to fit. Top = date & time bar, left = event + goal rail,
-   centre = isometric HDB neighbourhood, right = active policies + AI advisor, bottom = Slay-the-Spire style fanned hand. */
+   centre = rotatable low-poly 3D HDB neighbourhood (Three.js), right = active policies + AI advisor, bottom = Slay-the-Spire style fanned hand. */
 :root{
   --night:#0c1a1d; --night-2:#12262a; --panel:#152d2f; --panel-2:#1b3836; --line:#2e4d4a;
   --ink:#f2eee3; --muted:#98ada7; --dim:#61756f;
@@ -27,7 +27,15 @@ body{background:var(--night);color:var(--ink);font-family:var(--f-body);overflow
 #stage{position:absolute;left:0;top:0;width:1280px;height:760px;transform-origin:0 0;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;
   background:radial-gradient(120% 90% at 55% 40%, #1a3a3b 0%, #10272a 55%, #0a1618 100%)}
 #stage.hot{background:radial-gradient(120% 90% at 55% 40%, #3a3127 0%, #24241f 50%, #12191a 100%)}
-#city{position:absolute;inset:0;width:1280px;height:760px}
+#city,#fx{position:absolute;inset:0;width:1280px;height:760px}
+#fx{pointer-events:none}
+#city{cursor:grab}
+#camCtl{position:absolute;right:30px;top:500px;z-index:30;width:150px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#camCtl .hint{font-size:10px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;text-shadow:0 1px 2px #000}
+#camCtl .btns{display:flex;gap:8px}
+#camCtl button{width:34px;height:34px;border-radius:50%;border:1px solid #ffffff33;background:#0b1719cc;cursor:pointer;display:grid;place-items:center;color:var(--ink);padding:0}
+#camCtl button:hover{border-color:var(--gold);color:var(--gold)}
+#camCtl svg{width:16px;height:16px}
 .num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
 button{font:inherit;color:inherit}
 button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
@@ -228,6 +236,7 @@ html:lang(en) .ctext{font-size:10.5px;line-height:1.32;padding:2px 2px}
 <body>
 <div id="stage">
   <canvas id="city" width="1280" height="760"></canvas>
+  <canvas id="fx" width="1280" height="760"></canvas>
 
   <header id="top">
     <div class="place"><b data-i18n="place"></b><span data-i18n="placeSub"></span></div>
@@ -262,6 +271,7 @@ html:lang(en) .ctext{font-size:10.5px;line-height:1.32;padding:2px 2px}
   <button class="pile" id="drawPile" type="button"><span class="stack"></span><span class="cnt" id="drawN"></span><span class="pl" data-i18n="drawPile"></span></button>
   <button class="pile disc" id="discPile" type="button"><span class="stack"></span><span class="cnt" id="discN"></span><span class="pl" data-i18n="discPile"></span></button>
   <button class="pile exh" id="exhPile" type="button" hidden><span class="stack"></span><span class="cnt" id="exhN"></span><span class="pl" data-i18n="exhPile"></span></button>
+  <div id="camCtl"><span class="hint" data-i18n="camHint"></span><div class="btns"><button type="button" data-cam="-1" data-i18n-aria="camL"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5H3V1M3.6 5A7 7 0 1 1 3 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button type="button" data-cam="0" data-i18n-aria="camReset"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3l7 6.5M5 8v9h10V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button><button type="button" data-cam="1" data-i18n-aria="camR"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13 5h4V1M16.4 5A7 7 0 1 0 17 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div></div>
   <button id="endTurn" type="button"><span data-i18n="endTurn"></span><small data-i18n="pressE"></small></button>
 
   <div id="playline"><span data-i18n="release"></span></div>
@@ -278,11 +288,12 @@ html:lang(en) .ctext{font-size:10.5px;line-height:1.32;padding:2px 2px}
 </div>
 <div id="rotate" data-i18n="rotate"></div>
 
+<script src="vendor/three.min.js"></script>
 <script>
 (() => {
 const W = 1280, H = 760;
 const $ = id => document.getElementById(id);
-const stage = $('stage'), canvas = $('city'), ctx = canvas.getContext('2d');
+const stage = $('stage'), canvas = $('city'), ctx = $('fx').getContext('2d');
 let SC = 1, RES = 1;
 
 /* ================= language ================= */
@@ -308,7 +319,7 @@ const STR = {
     type:{policy:'政策', power:'持续政策', event:'事件应急', stop:'结束政策'}, typeOngoing:' · 持续',
     ribbon:'事件限定 · 高温', givesStop: n => `打出后获得「${n}」。`, stopExhaust:'打出后<k>销毁</k>。',
     cards:{
-      batch:['组屋批量绿化','选择一栋组屋：它与左右相邻的组屋一起进行生态改造，每栋只需 {$60}。'],
+      batch:['组屋批量绿化','选择一栋组屋：它与同一排两侧相邻的组屋一起进行生态改造，每栋只需 {$60}。'],
       plant:['社区种树日','选择一块空地，免费建成口袋公园，覆盖周边 1 格组屋。'],
       subsidy:['能源电费补贴','<k>持续</k>：热压力 ≥2 的组屋，高温宜居惩罚减半。每回合 −{$30}。'],
       cool:['开放避暑点','本回合结算时，社区俱乐部和熟食中心周边组屋热压力 −1。'],
@@ -366,6 +377,7 @@ const STR = {
     pCarT:'停车场改作绿地', pCarB:'收回现有用地并重新规划为公共绿地。成本比空地更高。', build: m => `建造 · ${m}`, cancel:'取消',
     vDraw:'抽牌堆', vDrawS: n => `共 ${n} 张，按名称排列（不显示抽取顺序）`, vDisc:'弃牌堆', vDiscS: n => `共 ${n} 张。抽牌堆用完时会洗回抽牌堆。`,
     vExh:'已销毁', vExhS:'这些牌已移出本局牌组。', vEmpty:'这里还没有牌。',
+    camHint:'拖动地图旋转 · 滚轮缩放', camL:'向左旋转视角', camR:'向右旋转视角', camReset:'重置视角',
     aDraw:'查看抽牌堆', aDisc:'查看弃牌堆', aExh:'查看已销毁的牌', aTimeline:'回合进度',
   },
   en: {
@@ -388,7 +400,7 @@ const STR = {
     type:{policy:'Policy', power:'Ongoing Policy', event:'Emergency', stop:'End Policy'}, typeOngoing:' · Ongoing',
     ribbon:'Event-only · Heat', givesStop: n => `Adds \"${n}\".`, stopExhaust:'<k>Exhaust</k>.',
     cards:{
-      batch:['Bulk Block Greening','Pick a block: retrofit it and the blocks on either side for {$60} each.'],
+      batch:['Bulk Block Greening','Pick a block: retrofit it and its two row neighbours for {$60} each.'],
       plant:['Planting Day','Pick an empty lot: build a free pocket park covering blocks within 1 tile.'],
       subsidy:['Energy Bill Subsidy','<k>Ongoing</k>: blocks at heat stress ≥2 take half the heat penalty. −{$30} per turn.'],
       cool:['Cooling Centres','At this turn\'s settlement, blocks next to the CC and hawker centre get −1 heat stress.'],
@@ -446,6 +458,7 @@ const STR = {
     pCarT:'Convert car park to green space', pCarB:'Reclaim the existing land and replan it as green space. Costs more than an empty lot.', build: m => `Build · ${m}`, cancel:'Cancel',
     vDraw:'Draw pile', vDrawS: n => `${n} cards, sorted by name (draw order hidden)`, vDisc:'Discard pile', vDiscS: n => `${n} cards. Shuffled back into the draw pile when it runs out.`,
     vExh:'Exhausted', vExhS:'These cards are out of your deck for this game.', vEmpty:'No cards here yet.',
+    camHint:'Drag to rotate · Scroll to zoom', camL:'Rotate view left', camR:'Rotate view right', camReset:'Reset view',
     aDraw:'View draw pile', aDisc:'View discard pile', aExh:'View exhausted cards', aTimeline:'Turn progress',
   },
 };
@@ -464,6 +477,7 @@ function applyStatic(){
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   document.title = L().docTitle;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = L()[el.dataset.i18n]; });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', L()[el.dataset.i18nAria]); el.title = L()[el.dataset.i18nAria]; });
   document.querySelectorAll('#lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
   $('drawPile').setAttribute('aria-label', L().aDraw); $('discPile').setAttribute('aria-label', L().aDisc); $('exhPile').setAttribute('aria-label', L().aExh);
   $('timeline').setAttribute('aria-label', L().aTimeline);
@@ -590,108 +604,227 @@ function finance(opt = {}){
 }
 const sum = Ls => Ls.reduce((a, [, v]) => a + v, 0);
 
-/* ================= canvas city ================= */
-const TW = 84, TH = 42, OX = 700, OY = 178;
-function iso(gx, gy){ return [OX + (gx-gy)*TW/2, OY + (gx+gy)*TH/2]; }
-function diamond(t, k = 1, lift = 0){
-  const [x, y] = iso(t.gx, t.gy), cx = x, cy = y + TH/2;
-  return [[x,y],[x+TW/2,y+TH/2],[x,y+TH],[x-TW/2,y+TH/2]].map(([px,py]) => [cx+(px-cx)*k, cy+(py-cy)*k - lift]);
-}
-function poly(pts, fill, stroke){ ctx.beginPath(); pts.forEach(([x,y],i) => i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.stroke();} }
+/* ================= 3D city (Three.js, low-poly, rotatable camera) ================= */
+// Tile (gx, gy) sits at world x = gx - 4, z = gy - 3.5; y is up. The rules engine never sees any of this.
+const tx = t => t.gx - 4, tz = t => t.gy - 3.5;
+const hdbH = t => t.h / 50;
+const VIEW = {az: Math.PI/4, el: .62, zoom: 1, taz: Math.PI/4, tel: .62, tzoom: 1};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+let renderer = null, scene, cam, sun, hemi, world, groundMat, raycaster, pickables = [], GEO, MAT;
+let hover = null, targetHover = null, now = 0, floats = [];
 function shade(hex, f){ const n = parseInt(hex.slice(1),16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`; }
 function mix(a, b, t){ const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16); const c=s=>Math.round(((A>>s)&255)*(1-t)+((B>>s)&255)*t); return `rgb(${c(16)},${c(8)},${c(0)})`; }
-function prism(t, k, h, top, left, right){
-  const b = diamond(t, k, 0), u = diamond(t, k, h);
-  poly([b[3],b[2],u[2],u[3]], left); poly([b[2],b[1],u[1],u[2]], right); poly(u, top);
-  return {b, u};
-}
-function tree(x, y, s, c1 = '#5fae5c', c2 = '#3e8443'){
-  ctx.fillStyle = '#6b4a2e'; ctx.fillRect(x-1.2*s, y-6*s, 2.4*s, 6*s);
-  poly([[x, y-24*s],[x-8*s, y-5*s],[x, y-7*s]], c1); poly([[x, y-24*s],[x, y-7*s],[x+8*s, y-5*s]], c2);
-}
-let hover = null, targetHover = null, now = 0, floats = [];
 function greenness(){
   const parks = tiles.filter(t => t.kind === 'park').length, ups = hdbs.filter(b => b.up).length;
   return Math.min(1, (parks*1.4 + ups) / (hdbs.length * 0.9));
 }
-function drawCity(){
-  ctx.setTransform(RES,0,0,RES,0,0);
-  ctx.clearRect(0,0,W,H);
-  const heat = heatLv(state.turn), g = greenness();
-  const ground = mix('#7f857c', '#6f9a62', g);
-  const c1 = diamond(tileAt(8,0)), c2 = diamond(tileAt(8,7)), c3 = diamond(tileAt(0,7));
-  const lip = 16;
-  poly([c3[3],c2[2],[c2[2][0],c2[2][1]+lip],[c3[3][0],c3[3][1]+lip]], '#2f3a35');
-  poly([c2[2],c1[1],[c1[1][0],c1[1][1]+lip],[c2[2][0],c2[2][1]+lip]], '#232d29');
+function lambert(c, extra){ return new THREE.MeshLambertMaterial(Object.assign({color: c}, extra || {})); }
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+const texCache = {};
+function facadeTex(t, up){
+  const key = [t.hue, t.band, t.h, up].join('|');
+  return texCache[key] || (texCache[key] = canvasTex(64, 256, (g, w, h) => {
+    g.fillStyle = t.hue; g.fillRect(0, 0, w, h);
+    const floors = Math.round(t.h / 7), fh = h / floors;
+    for (let i = 1; i < floors; i++){
+      const y = h - i*fh;
+      g.fillStyle = shade(t.hue, .45);
+      for (let x = 4; x < w - 4; x += 10) g.fillRect(x, y + fh*.22, 5, fh*.42);
+      g.fillStyle = shade(t.hue, .66); g.fillRect(0, y + fh - 2, w, 2);
+      if (up && i % 2 === 0){ g.fillStyle = '#4fa255'; g.fillRect(0, y + fh - 6, w, 4); }
+    }
+    g.fillStyle = t.band; g.fillRect(0, 0, w, h*.07);
+    if (up){ g.fillStyle = '#5fae5c'; [6, 30, 54].forEach(x => g.fillRect(x, h*.12, 3, h*.8)); }
+  }));
+}
+function init3D(){
+  if (!window.THREE) return false;
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true}); }
+  catch (e) { renderer = null; return false; }
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene();
+  cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 200);
+  cam.setViewOffset(W, H, -60, 46, W, H);           // nudge the map right of the left rail and above the hand
+  hemi = new THREE.HemisphereLight(0xdff0ff, 0x46564c, .75); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff4e0, .85);
+  sun.position.set(6, 14, 5); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, {left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40});
+  sun.shadow.bias = -.0008;
+  scene.add(sun);
+  raycaster = new THREE.Raycaster();
+  GEO = {
+    slab: new THREE.BoxGeometry(.98, .12, .98), hl: new THREE.PlaneGeometry(.96, .96), ring: new THREE.RingGeometry(.5, .6, 32),
+    cone: new THREE.ConeGeometry(.15, .42, 5), trunk: new THREE.CylinderGeometry(.025, .03, .12, 5), dash: new THREE.BoxGeometry(.2, .01, .04),
+  };
+  const emptyTop = canvasTex(64, 64, (g, w, h) => {
+    g.fillStyle = '#9a8f78'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#f2eee399'; g.lineWidth = 2; g.setLineDash([5, 5]); g.strokeRect(9, 9, w - 18, h - 18);
+  });
+  const parkade = canvasTex(32, 64, (g, w, h) => {
+    g.fillStyle = '#8b908d'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2b2f2e'; for (let y = 10; y < h; y += 16) g.fillRect(0, y, w, 5);
+  });
+  groundMat = lambert(0x7f857c);
+  MAT = {
+    road: lambert(0x3d4446), park: lambert(0x4f9a52), side: lambert(0x6f7469), dash: lambert(0xd9d3c4),
+    empty: [lambert(0x7d7462), lambert(0x7d7462), lambert(0xffffff, {map: emptyTop}), lambert(0x7d7462), lambert(0x7d7462), lambert(0x7d7462)],
+    carparkGround: lambert(0x6d7270), parkade: lambert(0xffffff, {map: parkade}), parkadeTop: lambert(0x9a9f9c),
+    trunk: lambert(0x6b4a2e), leaf: lambert(0x5fae5c, {flatShading: true}), leaf2: lambert(0x7fd07a, {flatShading: true}),
+    sand: lambert(0xc9b79a), roofRed: lambert(0xd85a35, {flatShading: true}), roofGreen: lambert(0x5aa85c, {flatShading: true}),
+    cc: lambert(0x7cc0b6), flag: lambert(0xef5a4c), pole: lambert(0xdddddd), plinth: lambert(0x26302c),
+  };
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(9.3, .5, 8.3), MAT.plinth);
+  plinth.position.y = -.25; plinth.receiveShadow = true; scene.add(plinth);
+  world = new THREE.Group(); scene.add(world);
+  return true;
+}
+function tree3D(grp, x, z, s, y = .12, leaf = MAT.leaf){
+  const tr = new THREE.Mesh(GEO.trunk, MAT.trunk); tr.position.set(x, y + .06*s, z); tr.scale.setScalar(s);
+  const cr = new THREE.Mesh(GEO.cone, leaf); cr.position.set(x, y + .3*s, z); cr.scale.setScalar(s); cr.rotation.y = x * 7;
+  cr.castShadow = true; grp.add(tr, cr);
+}
+const tileSig = t => [t.kind, t.up, t.shaded].join('|');
+function buildTile(t){
+  if (t.obj) world.remove(t.obj);
+  const g = new THREE.Group(); g.position.set(tx(t), 0, tz(t));
+  t.picks = []; t.side = null; t.topY = .12;
+  const slabMat = t.kind === 'road' ? MAT.road : t.kind === 'park' ? MAT.park : t.kind === 'empty' ? MAT.empty : t.kind === 'carpark' ? MAT.carparkGround : groundMat;
+  const slab = new THREE.Mesh(GEO.slab, slabMat); slab.position.y = .06; slab.receiveShadow = true;
+  g.add(slab); t.picks.push(slab);
+  if (t.kind === 'road') [-.24, .24].forEach(x => { const d = new THREE.Mesh(GEO.dash, MAT.dash); d.position.set(x, .125, 0); g.add(d); });
+  if (t.kind === 'park') [[-.26,-.18,1],[.22,-.24,.9],[0,.12,1.15],[-.2,.28,.85],[.3,.24,.8]].forEach(([x, z, s]) => tree3D(g, x, z, s));
+  if (t.kind === 'hawker'){
+    const base = new THREE.Mesh(new THREE.BoxGeometry(.86, .26, .86), MAT.sand); base.position.y = .25; base.castShadow = base.receiveShadow = true;
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(.7, .32, 4), t.shaded ? MAT.roofGreen : MAT.roofRed);
+    roof.rotation.y = Math.PI/4; roof.position.y = .54; roof.castShadow = true;
+    g.add(base, roof); t.picks.push(base, roof); t.topY = .7;
+  }
+  if (t.kind === 'cc'){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.8, .5, .8), MAT.cc); b.position.y = .37; b.castShadow = b.receiveShadow = true;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .5, 4), MAT.pole); pole.position.set(.28, .87, .28);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(.18, .1, .01), MAT.flag); flag.position.set(.37, 1.05, .28);
+    g.add(b, pole, flag); t.picks.push(b); t.topY = 1.1;
+  }
+  if (t.kind === 'carpark'){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.84, .55, .84), [MAT.parkade, MAT.parkade, MAT.parkadeTop, MAT.parkadeTop, MAT.parkade, MAT.parkade]);
+    b.position.y = .395; b.castShadow = b.receiveShadow = true; g.add(b); t.picks.push(b); t.topY = .67;
+  }
+  if (t.kind === 'hdb'){
+    const hgt = hdbH(t);
+    t.side = new THREE.MeshLambertMaterial({map: facadeTex(t, t.up), emissive: 0xff5a1e, emissiveIntensity: 0});
+    const roofMat = t.up ? MAT.roofGreen : lambert(shade(t.hue, .9));
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.72, hgt, .72), [t.side, t.side, roofMat, roofMat, t.side, t.side]);
+    b.position.y = .12 + hgt/2; b.castShadow = b.receiveShadow = true;
+    g.add(b); t.picks.push(b); t.topY = .12 + hgt;
+    if (t.up) [[-.18,-.15],[.16,-.1],[-.05,.16],[.2,.2]].forEach(([x, z]) => tree3D(g, x, z, .55, t.topY, MAT.leaf2));
+    t.ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({color: 0x8fd2e2, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false}));
+    t.ring.rotation.x = -Math.PI/2; t.ring.position.y = .13; t.ring.visible = false; g.add(t.ring);
+  }
+  t.hl = new THREE.Mesh(GEO.hl, new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: .2, depthWrite: false}));
+  t.hl.rotation.x = -Math.PI/2; t.hl.position.y = .125; t.hl.visible = false; g.add(t.hl);
+  t.picks.forEach(m => m.userData.tile = t);
+  t.obj = g; t.sig = tileSig(t); world.add(g);
+}
+function sync3D(){
+  if (!renderer) return;
+  let changed = false;
+  tiles.forEach(t => { if (t.sig !== tileSig(t)){ buildTile(t); changed = true; } });
+  if (changed) pickables = tiles.flatMap(t => t.picks);
+}
+function reset3D(){
+  if (!renderer) return;
+  while (world.children.length) world.remove(world.children[0]);
+  sync3D();
+}
+function proj(x, y, z){
+  const v = new THREE.Vector3(x, y, z).project(cam);
+  return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H, v.z];
+}
+function tileScreen(t, lift = 0){ return renderer ? proj(tx(t), (t.topY || .12) + lift, tz(t)) : [700, 320, 0]; }
+function pick(x, y){
+  if (!renderer) return null;
+  raycaster.setFromCamera({x: x / W * 2 - 1, y: -(y / H * 2 - 1)}, cam);
+  const hit = raycaster.intersectObjects(pickables, false)[0];
+  return hit ? hit.object.userData.tile : null;
+}
+function frame3D(){
+  if (!renderer) return;
+  VIEW.az += (VIEW.taz - VIEW.az) * .14; VIEW.el += (VIEW.tel - VIEW.el) * .14; VIEW.zoom += (VIEW.tzoom - VIEW.zoom) * .14;
+  const d = 30;
+  cam.position.set(Math.sin(VIEW.az) * Math.cos(VIEW.el) * d, Math.sin(VIEW.el) * d, Math.cos(VIEW.az) * Math.cos(VIEW.el) * d);
+  cam.lookAt(0, 0, 0);
+  const hh = 6.3 / VIEW.zoom;
+  cam.left = -hh * W / H; cam.right = hh * W / H; cam.top = hh; cam.bottom = -hh; cam.updateProjectionMatrix();
+  const heat = heatLv(state.turn);
+  groundMat.color.set(mix('#7f857c', '#6f9a62', greenness()));
+  sun.color.set(heat ? 0xffdcb8 : 0xfff4e0); sun.intensity = heat ? .95 : .85;
+  hemi.color.set(heat ? 0xffeedd : 0xdff0ff);
+  // tile highlights: target under the arrow > valid targets > park coverage > plain hover
+  const tcard = drag && drag.card && CARDS[drag.card.key].target ? drag.card : null;
+  let covSrc = hover && hover.kind === 'park' ? hover : null;
+  if (tcard && CARDS[tcard.key].target === 'empty' && targetHover) covSrc = targetHover;
+  const r = radius(), pulse = .5 + .5 * Math.sin(now / 180);
   tiles.forEach(t => {
-    const d = diamond(t);
-    let f = ground;
-    if (t.kind === 'road') f = '#3d4446';
-    else if (t.kind === 'park') f = '#4f9a52';
-    else if (t.kind === 'empty') f = '#9a8f78';
-    else if (t.kind === 'carpark') f = '#6d7270';
-    poly(d, f, '#00000022');
-    if (t.kind === 'road'){
-      const [x, y] = iso(t.gx, t.gy); ctx.strokeStyle = '#d9d3c455'; ctx.setLineDash([5,6]); ctx.beginPath();
-      ctx.moveTo(x-TW/4, y+TH/4); ctx.lineTo(x+TW/4, y+TH*3/4);
-      ctx.stroke(); ctx.setLineDash([]);
-    }
-    if (t.kind === 'empty'){ ctx.setLineDash([3,4]); poly(diamond(t,.78), null, '#f2eee366'); ctx.setLineDash([]); }
+    let col = null, op = 0;
+    if (t === targetHover){ col = 0x9dffa6; op = .55; }
+    else if (tcard && validTarget(tcard, t)){ col = 0xe6b84a; op = .25 + .25 * pulse; }
+    else if (covSrc && t !== covSrc && cheb(t, covSrc) <= r){ col = 0x8ff094; op = .35; }
+    else if (t === hover && !drag){ col = 0xffffff; op = .22; }
+    t.hl.visible = !!col;
+    if (col){ t.hl.material.color.setHex(col); t.hl.material.opacity = op; }
   });
-  let covSrc = null;
-  if (hover && hover.kind === 'park') covSrc = hover;
-  if (drag && drag.card && CARDS[drag.card.key].target === 'empty' && targetHover) covSrc = targetHover;
-  if (covSrc){
-    const r = radius();
-    tiles.forEach(t => { if (cheb(t, covSrc) <= r && t !== covSrc) poly(diamond(t,.94), '#8ff09433', '#8ff09477'); });
-  }
-  if (drag && drag.card && CARDS[drag.card.key].target){
-    const a = .35 + .25*Math.sin(now/180);
-    tiles.filter(t => validTarget(drag.card, t)).forEach(t => poly(diamond(t,.96), `rgba(230,184,74,${a*.35})`, `rgba(230,184,74,${a+.2})`));
-  }
-  if (hover && !drag) poly(diamond(hover,.98), '#ffffff14', '#ffffffaa');
-  if (targetHover) { ctx.lineWidth = 2.5; poly(diamond(targetHover,.98), '#6cc46f33', '#b9ffbf'); ctx.lineWidth = 1; }
-
-  const labels = [];
-  [...tiles].sort((a,b) => (a.gx+a.gy)-(b.gx+b.gy) || a.gx-b.gx).forEach(t => {
-    const [x, y] = iso(t.gx, t.gy), cx = x, cy = y + TH/2;
-    if (t.kind === 'park'){
-      [[-14,-2,1],[12,-4,.9],[0,8,1.1],[-2,-10,.8],[16,8,.8]].forEach(([dx,dy,s]) => tree(cx+dx, cy+dy, s));
-    }
-    if (t.kind === 'hawker'){
-      prism(t, .86, 18, '#c9b79a', '#a1907a', '#8a7a66');
-      const u = diamond(t, .92, 18);
-      const m1 = [(u[2][0]+u[3][0])/2, (u[2][1]+u[3][1])/2-14], m0 = [(u[0][0]+u[1][0])/2, (u[0][1]+u[1][1])/2-14];
-      poly([u[3],u[2],m1], t.shaded ? '#4f9a52' : '#c4502f');
-      poly([u[0],u[3],m1,m0], t.shaded ? '#62b064' : '#e0663f');
-      poly([u[1],u[2],m1,m0], t.shaded ? '#3e8443' : '#a6402a');
-      labels.push([cx, cy-44, L().hawker]);
-    }
-    if (t.kind === 'cc'){
-      prism(t, .8, 30, '#7cc0b6', '#4f978e', '#3c7a73');
-      ctx.strokeStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(cx+8, cy-30-TH*.2); ctx.lineTo(cx+8, cy-58); ctx.stroke();
-      poly([[cx+8,cy-58],[cx+22,cy-54],[cx+8,cy-50]], '#ef5a4c');
-      labels.push([cx, cy-66, L().cc]);
-    }
-    if (t.kind === 'carpark'){
-      const {b} = prism(t, .84, 34, '#8b908d', '#6e7370', '#5a5e5c');
-      ctx.strokeStyle = '#2b2f2e'; for (let yy = 8; yy < 34; yy += 9){ ctx.beginPath(); ctx.moveTo(b[3][0], b[3][1]-yy); ctx.lineTo(b[2][0], b[2][1]-yy); ctx.lineTo(b[1][0], b[1][1]-yy); ctx.stroke(); }
-    }
-    if (t.kind === 'hdb') drawHDB(t, cx, cy);
+  hdbs.forEach(b => {
+    const e = evalB(b);
+    if (b === targetHover || (b === hover && !drag)){ b.side.emissive.setHex(b === targetHover ? 0x6cff7a : 0xffffff); b.side.emissiveIntensity = .18; }
+    else { b.side.emissive.setHex(0xff5a1e); b.side.emissiveIntensity = heat && e.stress ? .1 * e.stress + .05 * Math.sin(now / 300 + b.gx) : 0; }
+    b.ring.visible = state.marked.includes(b);
+    if (b.ring.visible) b.ring.scale.setScalar(1 + .1 * Math.sin(now / 200));
   });
-  labels.forEach(a => label(...a));
+  renderer.render(scene, cam);
+}
 
+/* overlay canvas: labels, heat badges, shimmer and floating numbers, projected from 3D each frame */
+function drawFx(){
+  ctx.setTransform(RES, 0, 0, RES, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!renderer) return;
+  const heat = heatLv(state.turn);
   if (heat){
-    const gr = ctx.createRadialGradient(OX, OY+120, 40, OX, OY+120, 520);
-    gr.addColorStop(0, `rgba(255,122,51,${.05*heat})`); gr.addColorStop(1, 'rgba(255,122,51,0)');
+    const [ox, oy] = proj(0, 0, 0);
+    const gr = ctx.createRadialGradient(ox, oy, 40, ox, oy, 520);
+    gr.addColorStop(0, `rgba(255,122,51,${.05 * heat})`); gr.addColorStop(1, 'rgba(255,122,51,0)');
     ctx.fillStyle = gr; ctx.fillRect(0, 56, W, H);
   }
+  const marks = [];
+  tiles.forEach(t => {
+    if (t.kind === 'hawker' || t.kind === 'cc') marks.push({p: tileScreen(t, .22), lab: t.kind === 'hawker' ? L().hawker : L().cc});
+    if (t.kind === 'hdb' && heat){ const e = evalB(t); if (e.stress > 0) marks.push({p: tileScreen(t, .12), stress: e.stress, t}); }
+  });
+  marks.sort((a, b) => (a.lab ? 1 : 0) - (b.lab ? 1 : 0) || b.p[2] - a.p[2]);   // badges far → near, place names always on top
+  marks.forEach(m => {
+    const [x, y] = m.p;
+    if (m.lab){ label(x, y - 8, m.lab); return; }
+    ctx.strokeStyle = `rgba(255,170,90,${.25 + .12 * m.stress})`; ctx.lineWidth = 1.5;
+    for (let i = -1; i <= 1; i++){
+      ctx.beginPath();
+      for (let s = 0; s <= 14; s++){ const yy = y - 4 - s * 1.4; const xx = x + i * 9 + Math.sin(now / 220 + s * .7 + i) * 2.5; s ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+    badge(x + 18, y - 6, m.stress);
+  });
   floats = floats.filter(f => now - f.t0 < 1600);
   floats.forEach(f => {
-    const k = (now - f.t0) / 1600;
-    ctx.globalAlpha = 1 - k*k; ctx.font = '700 15px "JetBrains Mono", "Noto Sans SC", monospace'; ctx.textAlign = 'center';
-    ctx.lineWidth = 3; ctx.strokeStyle = '#000a'; ctx.strokeText(f.text, f.x, f.y - k*40);
-    ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y - k*40); ctx.globalAlpha = 1; ctx.lineWidth = 1;
+    const k = (now - f.t0) / 1600, [x, y] = proj(f.wx, f.wy, f.wz);
+    ctx.globalAlpha = 1 - k * k; ctx.font = '700 15px "JetBrains Mono", "Noto Sans SC", monospace'; ctx.textAlign = 'center';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000a'; ctx.strokeText(f.text, x, y - k * 40);
+    ctx.fillStyle = f.color; ctx.fillText(f.text, x, y - k * 40); ctx.globalAlpha = 1; ctx.lineWidth = 1;
   });
 }
 function label(x, y, s){
@@ -699,44 +832,6 @@ function label(x, y, s){
   const w = ctx.measureText(s).width + 10;
   ctx.fillStyle = '#0b1719cc'; ctx.beginPath(); ctx.roundRect(x - w/2, y - 9, w, 15, 7); ctx.fill();
   ctx.fillStyle = '#e8e2d4'; ctx.fillText(s, x, y + 2);
-}
-function drawHDB(t, cx, cy){
-  const e = evalB(t), heat = heatLv(state.turn);
-  const k = .72, h = t.h;
-  const body = t.hue;
-  const {b, u} = prism(t, k, h, e.up ? '#5fae5c' : shade(body, .92), shade(body, .86), shade(body, .7));
-  ctx.lineWidth = 1;
-  for (let yy = 9, i = 0; yy < h - 6; yy += 8, i++){
-    ctx.strokeStyle = shade(body, .55);
-    ctx.beginPath(); ctx.moveTo(b[3][0]+2, b[3][1]-yy); ctx.lineTo(b[2][0], b[2][1]-yy); ctx.lineTo(b[1][0]-2, b[1][1]-yy); ctx.stroke();
-    if (e.up && i % 2 === 0){
-      ctx.strokeStyle = '#4fa255'; ctx.lineWidth = 2.4;
-      ctx.beginPath(); ctx.moveTo(b[3][0]+4, b[3][1]-yy+1.5); ctx.lineTo(b[2][0]-3, b[2][1]-yy+1.5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(b[2][0]+3, b[2][1]-yy+1.5); ctx.lineTo(b[1][0]-4, b[1][1]-yy+1.5); ctx.stroke();
-      ctx.lineWidth = 1;
-    }
-  }
-  poly([[b[3][0],u[3][1]+8],[b[2][0],u[2][1]+8],u[2],u[3]], t.band);
-  poly([[b[2][0],u[2][1]+8],[b[1][0],u[1][1]+8],u[1],u[2]], shade(t.band, .8));
-  if (e.up){
-    [[-8,0],[6,-3],[0,4],[10,3]].forEach(([dx,dy]) => tree(cx+dx, cy-h+dy+2, .45, '#7fd07a', '#4f9a52'));
-  }
-  if (heat && e.stress > 0){
-    const a = .1 * e.stress + .05*Math.sin(now/300 + t.gx);
-    poly([b[3],b[2],u[2],u[3]], `rgba(255,110,40,${a})`); poly([b[2],b[1],u[1],u[2]], `rgba(255,90,30,${a})`);
-    ctx.strokeStyle = `rgba(255,170,90,${.25 + .12*e.stress})`; ctx.lineWidth = 1.5;
-    for (let i = -1; i <= 1; i++){
-      ctx.beginPath();
-      for (let s = 0; s <= 16; s++){ const yy = cy - h - 18 - s*1.4; const xx = cx + i*10 + Math.sin(now/220 + s*.7 + i)*2.5; s ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
-      ctx.stroke();
-    }
-    ctx.lineWidth = 1;
-    badge(cx + 20, cy - h - 10, e.stress);
-  }
-  if (state.marked.includes(t)){
-    const r = 30 + 4*Math.sin(now/200);
-    ctx.strokeStyle = '#8fd2e2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, cy, r, r/2, 0, 0, Math.PI*2); ctx.stroke(); ctx.lineWidth = 1;
-  }
 }
 function badge(x, y, n){
   const s = L().heatBadge(n);
@@ -746,17 +841,8 @@ function badge(x, y, n){
   ctx.beginPath(); ctx.roundRect(x - w/2, y - 9, w, 16, 8); ctx.fill();
   ctx.fillStyle = '#2a1300'; ctx.fillText(s, x, y + 3);
 }
-function pip(p, pts){ let c = false; for (let i = 0, j = pts.length-1; i < pts.length; j = i++){ const [xi,yi]=pts[i],[xj,yj]=pts[j]; if(((yi>p[1])!==(yj>p[1])) && p[0] < (xj-xi)*(p[1]-yi)/(yj-yi)+xi) c=!c; } return c; }
-function pick(x, y){
-  const order = [...tiles].sort((a,b) => (b.gx+b.gy)-(a.gx+a.gy));
-  for (const t of order){
-    const hgt = t.kind === 'hdb' ? t.h + 8 : t.kind === 'cc' ? 30 : t.kind === 'hawker' ? 30 : t.kind === 'carpark' ? 34 : 0;
-    const k = t.kind === 'hdb' ? .72 : .86;
-    if (hgt){ const b = diamond(t, k, 0), u = diamond(t, k, hgt); if (pip([x,y], [u[0],u[1],b[1],b[2],b[3],u[3]])) return t; }
-  }
-  for (const t of order) if (pip([x,y], diamond(t))) return t;
-  return null;
-}
+function rotateView(step){ VIEW.taz += step * Math.PI / 2; }
+function resetView(){ VIEW.taz = Math.round((VIEW.taz - Math.PI/4) / (2*Math.PI)) * 2*Math.PI + Math.PI/4; VIEW.tel = .62; VIEW.tzoom = 1; }
 
 /* ================= card rendering ================= */
 const ART = {
@@ -899,7 +985,7 @@ function say(msg, cls = 'warn', shakeOrb = false){
   setTimeout(() => d.remove(), 2600);
   if (shakeOrb){ const o = $('orb'); o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); }
 }
-function pushFloat(t, text, color){ const [x, y] = iso(t.gx, t.gy); floats.push({x, y: y + TH/2 - (t.h || 20) - 20, text, color, t0: performance.now()}); }
+function pushFloat(t, text, color){ floats.push({wx: tx(t), wy: (t.topY || .12) + .35, wz: tz(t), text, color, t0: performance.now()}); }
 function play(card, target){
   const c = CARDS[card.key], T = L();
   state.pp -= c.cost;
@@ -1050,11 +1136,12 @@ function showEnd(){
     <div class="kv"><span>${T.endParks}</span><b class="num">${tiles.filter(t=>t.kind==='park').length}</b></div></div>
     <button class="close" id="again" type="button" style="position:static;margin-top:20px">${T.again}</button>`;
   o.hidden = false;
-  $('again').onclick = () => { o.hidden = true; els.forEach(e => e.remove()); els.clear(); init(); render(); banner(); };
+  $('again').onclick = () => { o.hidden = true; els.forEach(e => e.remove()); els.clear(); init(); reset3D(); render(); banner(); };
 }
 
 /* ================= HUD render ================= */
 function render(){
+  sync3D();
   const T = L(), heat = heatLv(state.turn), live = community(), fl = finance(), fd = sum(fl);
   const pop = hdbs.reduce((a,b)=>a+b.pop,0), cap = hdbs.reduce((a,b)=>a+b.cap,0);
   stage.classList.toggle('hot', !!heat);
@@ -1181,10 +1268,10 @@ function openPop(t){
   else if (t.kind === 'carpark'){ title = T.pCarT; body = T.pCarB; cost = CARPARK_COST; act = () => { t.kind = 'park'; pushFloat(t, L().fPark, '#b9ffbf'); }; }
   else return;
   popTile = t;
-  const [x, y] = iso(t.gx, t.gy);
+  const [x, y] = tileScreen(t);
   p.innerHTML = `<h5>${title}</h5><p>${body}</p><div class="acts"><button type="button" id="popGo" ${state.money < cost ? 'disabled' : ''}>${T.build(money(cost))}</button><button type="button" class="ghost" id="popX">${T.cancel}</button></div>`;
-  p.style.left = Math.max(310, Math.min(x - 120, W - 430)) + 'px';
-  p.style.top = Math.max(64, y - 160 - (t.h || 0) * .3) + 'px';
+  p.style.left = clamp(x - 120, 310, W - 430) + 'px';
+  p.style.top = clamp(y - 190, 64, 400) + 'px';
   p.hidden = false; $('tip').hidden = true;
   $('popGo').onclick = () => { state.money -= cost; act(); closePop(); render(); };
   $('popX').onclick = closePop;
@@ -1193,10 +1280,15 @@ function closePop(){ $('pop').hidden = true; popTile = null; }
 
 /* ================= input ================= */
 function toStage(e){ const r = stage.getBoundingClientRect(); return [(e.clientX - r.left) / SC, (e.clientY - r.top) / SC]; }
-let down = null;
+let down = null, orbit = null;
 stage.addEventListener('pointermove', e => {
   pointer = toStage(e);
   if (down && !drag && Math.hypot(pointer[0]-down.x, pointer[1]-down.y) > 8) startDrag(down.card);
+  if (orbit){
+    const dx = pointer[0] - orbit.x, dy = pointer[1] - orbit.y;
+    if (!orbit.moved && Math.hypot(dx, dy) > 5){ orbit.moved = true; closePop(); $('tip').hidden = true; hover = null; }
+    if (orbit.moved){ VIEW.taz = orbit.az - dx * .008; VIEW.tel = clamp(orbit.el + dy * .006, .38, 1.3); stage.style.cursor = 'grabbing'; return; }
+  }
   if (drag){
     const c = CARDS[drag.card.key];
     targetHover = c.target && pointer[1] < 560 ? (t => validTarget(drag.card, t) ? t : null)(pick(...pointer)) : null;
@@ -1205,7 +1297,7 @@ stage.addEventListener('pointermove', e => {
   }
   const hi = state.busy || !$('overlay').hidden ? -1 : handIndexAt(...pointer);
   if (hi !== hoverIdx){ hoverIdx = hi; layoutHand(); }
-  hover = hi < 0 && pointer[1] > 56 && pointer[1] < 590 && pointer[0] > 300 && pointer[0] < 1090 ? pick(...pointer) : null;
+  hover = hi < 0 && e.target === canvas ? pick(...pointer) : null;
   showTip(hover, ...pointer);
   stage.style.cursor = hi >= 0 ? 'grab' : hover && ['hdb','empty','carpark'].includes(hover.kind) ? 'pointer' : '';
 });
@@ -1215,22 +1307,36 @@ stage.addEventListener('pointerdown', e => {
   if (drag){ resolveDrag(); e.preventDefault(); return; }   // click-to-pick-up mode: second click resolves
   if (state.busy) return;
   const hi = handIndexAt(...pointer);
-  if (hi >= 0){ down = {x: pointer[0], y: pointer[1], card: state.hand[hi]}; e.preventDefault(); }
+  if (hi >= 0){ down = {x: pointer[0], y: pointer[1], card: state.hand[hi]}; e.preventDefault(); return; }
+  if (e.target === canvas){ orbit = {x: pointer[0], y: pointer[1], az: VIEW.taz, el: VIEW.tel, moved: false}; e.preventDefault(); }
 });
 stage.addEventListener('pointerup', e => {
   pointer = toStage(e);
   if (drag && drag.moved){ resolveDrag(); return; }
   if (down && !drag){ startDrag(down.card, true); down = null; return; } // a simple click picks the card up
   down = null;
-  if (!drag && e.target === canvas){
+  if (orbit){
+    const o = orbit; orbit = null; stage.style.cursor = '';
+    if (o.moved) return;                                  // it was a camera drag, not a click
     const t = pick(...pointer);
-    if (t && !state.busy && $('pop').hidden) openPop(t); else if ($('pop').hidden === false && !$('pop').contains(e.target)) closePop();
+    if (t && !state.busy && $('pop').hidden) openPop(t); else closePop();
   }
+});
+stage.addEventListener('wheel', e => {
+  if (e.target !== canvas) return;
+  e.preventDefault();
+  VIEW.tzoom = clamp(VIEW.tzoom * Math.exp(-e.deltaY * .0012), .7, 2.4);
+}, {passive: false});
+document.querySelectorAll('#camCtl button').forEach(b => {
+  b.addEventListener('pointerdown', e => e.stopPropagation());
+  b.addEventListener('click', () => { const s = +b.dataset.cam; s ? rotateView(s) : resetView(); });
 });
 stage.addEventListener('contextmenu', e => { if (drag){ e.preventDefault(); cancelDrag(); } });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape'){ cancelDrag(); closePop(); $('adv').classList.remove('open'); $('overlay').hidden = true; }
   if ((e.key === 'e' || e.key === 'E') && !e.repeat && $('overlay').hidden) endTurn();
+  if (e.key === 'ArrowLeft' && $('overlay').hidden) rotateView(-1);
+  if (e.key === 'ArrowRight' && $('overlay').hidden) rotateView(1);
 });
 function startDrag(card, clickMode = false){
   if (!state.hand.includes(card)) return;
@@ -1272,11 +1378,13 @@ function fit(){
   SC = Math.min((vw - m*2) / W, (vh - m*2) / H);
   stage.style.transform = `translate(${(vw - W*SC)/2}px,${(vh - H*SC)/2}px) scale(${SC})`;
   RES = Math.min(2.5, Math.max(1, SC * (devicePixelRatio || 1)));
-  canvas.width = W * RES; canvas.height = H * RES;
+  $('fx').width = W * RES; $('fx').height = H * RES;
+  if (renderer){ renderer.setPixelRatio(RES); renderer.setSize(W, H, false); }
 }
 addEventListener('resize', fit);
-function loop(ts){ now = ts; drawCity(); requestAnimationFrame(loop); }
-init(); applyStatic(); fit(); render();
+function loop(ts){ now = ts; frame3D(); drawFx(); requestAnimationFrame(loop); }
+init(); applyStatic(); const ok3D = init3D(); fit(); render();
+if (!ok3D) setTimeout(() => say(lang === 'zh' ? '3D 地图无法加载：浏览器不支持 WebGL 或脚本被拦截' : '3D map could not load: WebGL is unavailable or the script was blocked'), 800);
 requestAnimationFrame(loop);
 setTimeout(() => banner(), 300);
 })();
