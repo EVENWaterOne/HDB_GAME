@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="HDB Eco Community：以新加坡组屋社区为场景的回合制生态改造与政策卡牌游戏 UI 原型。">
+<meta name="description" content="HDB Eco Community：以新加坡组屋社区为场景的回合制生态改造与政策卡牌游戏 UI 原型。A turn-based HDB eco-retrofit and policy card game UI prototype.">
 <title>HDB 生态社区</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,8 +16,8 @@
   --ink:#f2eee3; --muted:#98ada7; --dim:#61756f;
   --heat:#ff7a33; --heat-soft:#ffb35e; --eco:#6cc46f; --gold:#e6b84a;
   --policy:#3f86a8; --power:#7b68c0; --event:#d0782c; --stop:#8b5f5a; --bad:#ef5a4c;
-  --f-display:"Noto Serif SC","Songti SC","SimSun",serif;
-  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --f-display:"Noto Serif SC","Songti SC","SimSun",Georgia,serif;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
   color-scheme:dark;
 }
@@ -33,22 +33,22 @@ button{font:inherit;color:inherit}
 button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 /* ---------- top bar: date & time ---------- */
-#top{position:absolute;left:0;right:0;top:0;height:56px;display:flex;align-items:center;gap:18px;padding:0 16px;
+#top{position:absolute;left:0;right:0;top:0;height:56px;display:flex;align-items:center;gap:16px;padding:0 16px;
   background:linear-gradient(#081315,#0c1b1ecc);border-bottom:1px solid var(--line);z-index:20}
 .place{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
-.place b{font-family:var(--f-display);font-size:16px;letter-spacing:.04em}
-.place span{font-size:11px;color:var(--muted);letter-spacing:.08em}
-.res{display:flex;gap:14px}
+.place b{font-family:var(--f-display);font-size:16px;letter-spacing:.04em;white-space:nowrap}
+.place span{font-size:11px;color:var(--muted);letter-spacing:.08em;white-space:nowrap}
+.res{display:flex;gap:12px}
 .chip{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;background:#ffffff08;border:1px solid #ffffff10}
 .chip .ico{width:18px;height:18px;flex:none}
-.chip .lab{font-size:10px;color:var(--muted);letter-spacing:.08em;display:block}
+.chip .lab{font-size:10px;color:var(--muted);letter-spacing:.08em;display:block;white-space:nowrap}
 .chip .val{font-size:14px;font-weight:700}
-.chip .sub{font-size:11px;color:var(--muted);margin-left:2px}
+.chip .sub{font-size:11px;color:var(--muted);margin-left:4px}
 .delta.neg{color:var(--bad)} .delta.pos{color:var(--eco)}
 .clock{margin-left:auto;display:flex;align-items:center;gap:14px}
 .date{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
-.date b{font-family:var(--f-display);font-size:19px}
-.date span{font-size:11px;color:var(--muted)}
+.date b{font-family:var(--f-display);font-size:19px;white-space:nowrap}
+.date span{font-size:11px;color:var(--muted);white-space:nowrap}
 .timeline{display:flex;gap:3px;align-items:flex-end;height:30px}
 .tl{width:14px;height:8px;border-radius:2px;background:#ffffff1a;position:relative}
 .tl.past{background:#ffffff40}
@@ -59,13 +59,16 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
 .temp{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;border:1px solid #ffffff14}
 .temp.on{border-color:#ff7a3366;background:#ff7a331a;color:var(--heat-soft)}
 .temp b{font-size:15px}
+#lang{display:flex;border:1px solid #ffffff2a;border-radius:16px;overflow:hidden;flex:none}
+#lang button{border:0;background:transparent;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--muted);letter-spacing:.04em}
+#lang button[aria-pressed="true"]{background:var(--ink);color:#0c1a1d;font-weight:700}
 
 /* ---------- side rails ---------- */
 .rail{position:absolute;top:72px;display:flex;flex-direction:column;gap:12px;z-index:10}
 #left{left:16px;width:272px}
 #right{right:16px;width:178px;align-items:stretch}
 .panel{background:linear-gradient(180deg,#173232f2,#122729f2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px #0006}
-.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);display:flex;align-items:center;gap:6px}
+.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);display:flex;align-items:center;gap:6px;text-transform:uppercase}
 .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
 .panel h3{margin:6px 0 4px;font-family:var(--f-display);font-size:17px;text-wrap:balance}
 .panel p{margin:0;font-size:12px;line-height:1.55;color:#cfd8d3}
@@ -74,35 +77,36 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
 .heatbar{display:flex;gap:4px;margin:8px 0}
 .heatbar i{flex:1;height:6px;border-radius:3px;background:#ffffff14}
 .heatbar i.on{background:linear-gradient(90deg,var(--heat-soft),var(--heat))}
-.kv{display:flex;justify-content:space-between;font-size:12px;margin-top:6px;color:var(--muted)}
-.kv b{color:var(--ink);font-weight:500}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-top:6px;color:var(--muted)}
+.kv b{color:var(--ink);font-weight:500;text-align:right}
 .grant{margin-top:10px;padding-top:8px;border-top:1px dashed #ffffff22;font-size:11px;color:var(--heat-soft);line-height:1.5}
 .goal .eyebrow .dot{background:var(--gold)}
 .bar{height:8px;border-radius:4px;background:#ffffff14;margin:8px 0 2px;position:relative;overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#4e9e6a,var(--eco));transition:width .6s}
 .bar.goalbar::after{content:"";position:absolute;right:0;top:-2px;bottom:-2px;width:2px;background:var(--gold)}
 .reward{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;margin-top:8px;font-size:11px;line-height:1.45}
-.reward span:nth-child(odd){color:var(--muted)}
+.reward span:nth-child(odd){color:var(--muted);white-space:nowrap}
 .goal.done{border-color:#6cc46f88} .goal.fail{border-color:#ef5a4c88}
-.powers h4{margin:0 0 8px;font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:500}
+.powers h4{margin:0 0 8px;font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:500;text-transform:uppercase}
 .power{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:8px;background:#7b68c022;border:1px solid #7b68c055;margin-top:6px}
-.power .pi{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--power);font-size:11px;font-weight:700}
+.power .pi{min-width:22px;height:22px;padding:0 3px;border-radius:11px;flex:none;display:grid;place-items:center;background:var(--power);font-size:10px;font-weight:700}
 .power.ev .pi{background:var(--event)}
 .power b{display:block;font-size:12px}
 .power small{display:block;font-size:10.5px;color:var(--muted);line-height:1.4}
 .power small.warn{color:var(--heat-soft)}
-.empty{font-size:11px;color:var(--dim)}
+.empty{font-size:11px;color:var(--dim);line-height:1.5}
 #advBtn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid #6fb7c955;background:linear-gradient(180deg,#1d4148,#16323a);cursor:pointer;text-align:left}
 #advBtn:hover{border-color:#8fd2e2}
-#advBtn .eye{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c9f3ff,#3aa0bd 60%,#16505f);box-shadow:0 0 12px #3aa0bd88;flex:none}
-#advBtn b{display:block;font-size:13px} #advBtn small{font-size:10.5px;color:var(--muted)}
-.note{font-size:10px;color:var(--dim);line-height:1.5}
+.eye{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c9f3ff,#3aa0bd 60%,#16505f);box-shadow:0 0 12px #3aa0bd88;flex:none}
+#advBtn b{display:block;font-size:13px} #advBtn small{font-size:10.5px;color:var(--muted);line-height:1.35;display:block}
+.note{font-size:10px;color:var(--dim);line-height:1.5;margin:0}
 
 /* ---------- bottom controls ---------- */
 #orb{position:absolute;left:46px;top:560px;width:96px;height:96px;border-radius:50%;z-index:30;display:grid;place-items:center;text-align:center;
   background:radial-gradient(circle at 40% 35%,#ffe9a8 0%,#e6b84a 32%,#8a5a16 72%,#3b2408 100%);box-shadow:0 0 0 3px #2b1c08,0 0 24px #e6b84a66,inset 0 -8px 16px #0006}
 #orb .n{font-family:var(--f-num);font-size:28px;font-weight:700;color:#2a1904;text-shadow:0 1px 0 #fff6;line-height:1}
-#orb .l{font-size:10px;color:#3b2408;font-weight:700;letter-spacing:.1em;margin-top:2px}
+#orb .l{font-size:10px;color:#3b2408;font-weight:700;letter-spacing:.1em;margin-top:2px;text-transform:uppercase}
+html:lang(en) #orb .l{font-size:8.5px;letter-spacing:.06em}
 #orb.empty{filter:saturate(.25) brightness(.7)}
 #orb.shake{animation:shake .35s}
 .pile{position:absolute;z-index:30;width:66px;height:78px;cursor:pointer;display:grid;place-items:center;border:0;background:none;padding:0}
@@ -110,10 +114,11 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
 .pile.disc .stack{background:linear-gradient(160deg,#5a4a40,#352a24);border-color:#b39a86;box-shadow:-4px 4px 0 #2a201b,-8px 8px 0 #1f1814}
 .pile.exh .stack{background:linear-gradient(160deg,#4a2f3a,#2a1a22);border-color:#a07689;box-shadow:none;inset:14px 14px 18px}
 .pile .cnt{position:absolute;bottom:0;right:0;min-width:24px;height:24px;border-radius:12px;background:#0c1a1d;border:2px solid currentColor;font-family:var(--f-num);font-weight:700;font-size:12px;display:grid;place-items:center;color:var(--ink)}
-.pile .pl{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:10px;color:var(--muted);letter-spacing:.08em}
+.pile .pl{position:absolute;bottom:-14px;left:-10px;right:-10px;text-align:center;font-size:10px;color:var(--muted);letter-spacing:.08em;white-space:nowrap}
 #drawPile{left:22px;top:670px} #discPile{right:22px;top:670px} #exhPile{right:96px;top:688px;width:50px;height:60px}
 #endTurn{position:absolute;right:30px;top:592px;z-index:30;width:150px;height:56px;border-radius:28px;border:2px solid #f1d58a;cursor:pointer;
   background:linear-gradient(180deg,#e9c766,#b17d22);color:#2a1904;font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:.12em;box-shadow:0 6px 0 #6b4510,0 10px 24px #0008}
+html:lang(en) #endTurn{letter-spacing:.04em}
 #endTurn:hover{filter:brightness(1.08)} #endTurn:active{transform:translateY(3px);box-shadow:0 3px 0 #6b4510}
 #endTurn:disabled{filter:grayscale(.8) brightness(.6);cursor:default}
 #endTurn small{display:block;font-family:var(--f-body);font-size:10px;letter-spacing:.06em;font-weight:500;opacity:.75;margin-top:-2px}
@@ -133,47 +138,50 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
 .cost{position:absolute;left:-12px;top:-12px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;z-index:2;
   background:radial-gradient(circle at 40% 35%,#ffe9a8,#e6b84a 40%,#7b4f12);border:2px solid #2b1c08;font-family:var(--f-num);font-weight:700;font-size:19px;color:#2a1904}
 .card.nope .cost{color:#b3241a}
-.cname{width:calc(100% + 10px);margin-top:2px;padding:4px 6px 5px;text-align:center;font-family:var(--f-display);font-weight:900;font-size:14.5px;letter-spacing:.02em;
+.cname{width:calc(100% + 10px);margin-top:2px;padding:4px 6px 5px;text-align:center;font-family:var(--f-display);font-weight:900;font-size:14.5px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   background:linear-gradient(#00000055,#00000077);clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);text-shadow:0 1px 2px #000}
+html:lang(en) .cname{font-size:12px;letter-spacing:0;padding:5px 10px 6px 20px}
 .art{width:132px;height:74px;margin-top:5px;border-radius:6px;overflow:hidden;border:2px solid #0006;box-shadow:inset 0 0 0 1px #fff3;flex:none}
 .art svg{display:block;width:100%;height:100%}
-.ctype{margin-top:-9px;padding:1px 9px;border-radius:9px;font-size:10px;letter-spacing:.08em;background:#0b1719;border:1px solid #ffffff33;z-index:1}
+.ctype{margin-top:-9px;padding:1px 9px;border-radius:9px;font-size:10px;letter-spacing:.08em;background:#0b1719;border:1px solid #ffffff33;z-index:1;white-space:nowrap}
+html:lang(en) .ctype{letter-spacing:.02em;font-size:9.5px}
 .ctext{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11.5px;line-height:1.45;padding:2px 4px;color:#f6f1e6;text-shadow:0 1px 1px #0008}
+html:lang(en) .ctext{font-size:10.5px;line-height:1.32;padding:2px 2px}
 .ctext k,.kwd{color:var(--gold);font-weight:700}
 .ctags{display:flex;gap:4px;justify-content:center;min-height:16px}
 .ctags span{font-size:9.5px;padding:0 6px;border-radius:6px;background:#0005;color:var(--gold);letter-spacing:.06em;line-height:16px}
-.ribbon{position:absolute;right:-6px;top:96px;padding:2px 8px 2px 10px;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#2a1300;
+.ribbon{position:absolute;right:-6px;top:40px;padding:2px 8px 2px 10px;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#2a1300;white-space:nowrap;
   background:linear-gradient(90deg,#ffc074,#ff8d3a);clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 50%);box-shadow:0 2px 4px #0006;z-index:2}
 .card.burn{animation:burn .7s forwards}
 
 /* keyword tooltips (beside hovered card, as in StS) */
-#kwtip{position:absolute;z-index:60;width:200px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#kwtip{position:absolute;z-index:60;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 #kwtip div{background:#0b1719f2;border:1px solid #e6b84a66;border-radius:8px;padding:7px 9px;font-size:11.5px;line-height:1.5;color:#dfe6e2}
 #kwtip b{display:block;color:var(--gold);font-size:12px;margin-bottom:1px}
 
 #arrow{position:absolute;inset:0;z-index:45;pointer-events:none;overflow:visible}
 #playline{position:absolute;left:300px;right:300px;top:500px;height:0;border-top:2px dashed #ffffff30;z-index:39;display:none}
-#playline span{position:absolute;left:50%;transform:translate(-50%,-130%);font-size:11px;color:#ffffffaa;letter-spacing:.1em}
+#playline span{position:absolute;left:50%;transform:translate(-50%,-130%);font-size:11px;color:#ffffffaa;letter-spacing:.1em;white-space:nowrap}
 
 /* ---------- tooltips, popovers, overlays ---------- */
-#tip{position:absolute;z-index:70;min-width:190px;max-width:230px;pointer-events:none;background:#0b1719f2;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.5;box-shadow:0 8px 20px #0008}
+#tip{position:absolute;z-index:70;min-width:200px;max-width:240px;pointer-events:none;background:#0b1719f2;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.5;box-shadow:0 8px 20px #0008}
 #tip h5{margin:0 0 4px;font-size:13px;font-family:var(--f-display)}
 #tip .row{display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
-#tip .row b{color:var(--ink);font-weight:500}
+#tip .row b{color:var(--ink);font-weight:500;text-align:right}
 #tip .hint{margin-top:6px;font-size:11px;color:var(--gold)}
-#pop{position:absolute;z-index:75;width:230px;background:#0b1719f7;border:1px solid #e6b84a77;border-radius:12px;padding:12px;box-shadow:0 10px 30px #000a}
+#pop{position:absolute;z-index:75;width:240px;background:#0b1719f7;border:1px solid #e6b84a77;border-radius:12px;padding:12px;box-shadow:0 10px 30px #000a}
 #pop h5{margin:0 0 2px;font-family:var(--f-display);font-size:15px}
 #pop p{margin:4px 0 10px;font-size:11.5px;line-height:1.5;color:#cfd8d3}
 #pop .acts{display:flex;gap:8px}
 #pop button{flex:1;padding:8px;border-radius:8px;border:1px solid #6cc46f88;background:#244c33;cursor:pointer;font-size:12.5px}
 #pop button.ghost{border-color:#ffffff22;background:transparent;flex:none}
 #pop button:disabled{opacity:.45;cursor:default}
-#toast{position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
-#toast div{background:#0b1719f2;border:1px solid var(--line);border-radius:20px;padding:7px 14px;font-size:12.5px;animation:tin .25s ease-out}
+#toast{position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:560px}
+#toast div{background:#0b1719f2;border:1px solid var(--line);border-radius:20px;padding:7px 14px;font-size:12.5px;animation:tin .25s ease-out;text-align:center}
 #toast div.warn{border-color:#ff7a3399;color:var(--heat-soft)} #toast div.good{border-color:#6cc46f99;color:#b9f0bb}
-#report{position:absolute;left:50%;top:250px;transform:translate(-50%,-50%);z-index:85;width:340px;background:#0b1719f7;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px #000c}
+#report{position:absolute;left:50%;top:250px;transform:translate(-50%,-50%);z-index:85;width:350px;background:#0b1719f7;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px #000c}
 #report h4{margin:0;font-family:var(--f-display);font-size:16px}
-#report .src{font-size:10px;letter-spacing:.14em;color:var(--muted)}
+#report .src{font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
 #report ul{list-style:none;margin:10px 0 6px;padding:0;font-size:12.5px}
 #report li{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ffffff14}
 #report li.tot{border:0;font-weight:700;padding-top:6px}
@@ -194,11 +202,12 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
   padding:16px 18px;overflow:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.3,1);box-shadow:-20px 0 40px #0008}
 #adv.open{transform:none}
 #adv h3{margin:0;font-family:var(--f-display);font-size:18px;display:flex;align-items:center;gap:10px}
+#adv h3 .eye{width:22px;height:22px}
 #adv .x{margin-left:auto;border:1px solid #ffffff22;background:none;border-radius:14px;padding:3px 10px;cursor:pointer;font-size:12px}
 .advsec{margin-top:14px;border-radius:10px;padding:11px 12px}
 .advsec.eng{background:#ffffff08;border:1px solid #ffffff1a}
 .advsec.ai{background:#3aa0bd14;border:1px dashed #3aa0bd88}
-.advsec .tag{font-size:10px;letter-spacing:.14em;color:var(--muted);display:flex;justify-content:space-between}
+.advsec .tag{font-size:10px;letter-spacing:.14em;color:var(--muted);display:flex;justify-content:space-between;text-transform:uppercase}
 .advsec.ai .tag{color:#8fd2e2}
 .advsec ul{margin:8px 0 0;padding-left:16px;font-size:12.5px;line-height:1.6}
 .advsec li{margin-bottom:4px}
@@ -221,19 +230,20 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
   <canvas id="city" width="1280" height="760"></canvas>
 
   <header id="top">
-    <div class="place"><b>大巴窑东 · 湖畔邻区</b><span>既有 HDB 生态改造</span></div>
+    <div class="place"><b data-i18n="place"></b><span data-i18n="placeSub"></span></div>
     <div class="res">
-      <div class="chip" title="财政"><svg class="ico" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="#e6b84a"/><text x="10" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#3b2408">$</text></svg>
-        <div><span class="lab">财政</span><span class="val num" id="rMoney"></span><span class="sub num delta" id="rMoneyD"></span></div></div>
-      <div class="chip" title="人口 / 住房容量"><svg class="ico" viewBox="0 0 20 20"><circle cx="10" cy="6" r="3.5" fill="#cfd8d3"/><path d="M3 18c0-4 3-7 7-7s7 3 7 7z" fill="#cfd8d3"/></svg>
-        <div><span class="lab">人口 / 容量</span><span class="val num" id="rPop"></span></div></div>
-      <div class="chip" title="社区实际宜居度（按人口加权）"><svg class="ico" viewBox="0 0 20 20"><path d="M10 2c4 3 6 6 6 9a6 6 0 0 1-12 0c0-3 2-6 6-9z" fill="#6cc46f"/></svg>
-        <div><span class="lab">实际宜居度</span><span class="val num" id="rLive"></span></div></div>
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#e6b84a"/><text x="10" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#3b2408">$</text></svg>
+        <div><span class="lab" data-i18n="finance"></span><span class="val num" id="rMoney"></span><span class="sub num delta" id="rMoneyD"></span></div></div>
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6" r="3.5" fill="#cfd8d3"/><path d="M3 18c0-4 3-7 7-7s7 3 7 7z" fill="#cfd8d3"/></svg>
+        <div><span class="lab" data-i18n="popCap"></span><span class="val num" id="rPop"></span></div></div>
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2c4 3 6 6 6 9a6 6 0 0 1-12 0c0-3 2-6 6-9z" fill="#6cc46f"/></svg>
+        <div><span class="lab" data-i18n="liveLab"></span><span class="val num" id="rLive"></span></div></div>
     </div>
     <div class="clock">
-      <div class="temp" id="temp"><svg width="12" height="20" viewBox="0 0 12 20"><rect x="4" y="1" width="4" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="16" r="3.2" fill="currentColor"/></svg><b class="num" id="tempV"></b></div>
-      <div class="timeline" id="timeline" aria-label="回合进度"></div>
+      <div class="temp" id="temp"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><rect x="4" y="1" width="4" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="16" r="3.2" fill="currentColor"/></svg><b class="num" id="tempV"></b></div>
+      <div class="timeline" id="timeline"></div>
       <div class="date"><b id="dateV"></b><span id="turnV"></span></div>
+      <div id="lang" role="group" aria-label="Language / 语言"><button type="button" data-lang="zh" aria-pressed="false">中</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
     </div>
   </header>
 
@@ -243,18 +253,18 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
   </aside>
 
   <aside class="rail" id="right">
-    <button id="advBtn" type="button"><span class="eye"></span><span><b>AI 政策顾问</b><small>分析局势，不替你出牌</small></span></button>
+    <button id="advBtn" type="button"><span class="eye"></span><span><b data-i18n="advisor"></b><small data-i18n="advisorSub"></small></span></button>
     <section class="panel powers" id="powers"></section>
-    <p class="note">原型说明：所有数值均为占位，用于演示规则与交互。</p>
+    <p class="note" data-i18n="protoNote"></p>
   </aside>
 
-  <div id="orb"><div><div class="n num" id="ppV"></div><div class="l">政治点</div></div></div>
-  <button class="pile" id="drawPile" type="button" aria-label="查看抽牌堆"><span class="stack"></span><span class="cnt" id="drawN"></span><span class="pl">抽牌堆</span></button>
-  <button class="pile disc" id="discPile" type="button" aria-label="查看弃牌堆"><span class="stack"></span><span class="cnt" id="discN"></span><span class="pl">弃牌堆</span></button>
-  <button class="pile exh" id="exhPile" type="button" aria-label="查看已销毁的牌" hidden><span class="stack"></span><span class="cnt" id="exhN"></span><span class="pl">已销毁</span></button>
-  <button id="endTurn" type="button">结束回合<small>按 E</small></button>
+  <div id="orb"><div><div class="n num" id="ppV"></div><div class="l" data-i18n="pp"></div></div></div>
+  <button class="pile" id="drawPile" type="button"><span class="stack"></span><span class="cnt" id="drawN"></span><span class="pl" data-i18n="drawPile"></span></button>
+  <button class="pile disc" id="discPile" type="button"><span class="stack"></span><span class="cnt" id="discN"></span><span class="pl" data-i18n="discPile"></span></button>
+  <button class="pile exh" id="exhPile" type="button" hidden><span class="stack"></span><span class="cnt" id="exhN"></span><span class="pl" data-i18n="exhPile"></span></button>
+  <button id="endTurn" type="button"><span data-i18n="endTurn"></span><small data-i18n="pressE"></small></button>
 
-  <div id="playline"><span>松手打出</span></div>
+  <div id="playline"><span data-i18n="release"></span></div>
   <div id="hand"></div>
   <svg id="arrow" width="1280" height="760"></svg>
   <div id="kwtip" hidden></div>
@@ -263,10 +273,10 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
   <div id="toast"></div>
   <div id="report" hidden></div>
   <div id="banner"><div><b id="bannerT"></b><span id="bannerS"></span></div></div>
-  <aside id="adv" aria-label="AI 政策顾问"></aside>
+  <aside id="adv"></aside>
   <div id="overlay" hidden></div>
 </div>
-<div id="rotate">横屏查看效果更好</div>
+<div id="rotate" data-i18n="rotate"></div>
 
 <script>
 (() => {
@@ -274,6 +284,204 @@ const W = 1280, H = 760;
 const $ = id => document.getElementById(id);
 const stage = $('stage'), canvas = $('city'), ctx = canvas.getContext('2d');
 let SC = 1, RES = 1;
+
+/* ================= language ================= */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STR = {
+  zh: {
+    docTitle:'HDB 生态社区', place:'大巴窑东 · 湖畔邻区', placeSub:'既有 HDB 生态改造',
+    finance:'财政', popCap:'人口 / 容量', liveLab:'实际宜居度',
+    advisor:'AI 政策顾问', advisorSub:'分析局势，不替你出牌', protoNote:'原型说明：所有数值均为占位，用于演示规则与交互。',
+    pp:'政治点', drawPile:'抽牌堆', discPile:'弃牌堆', exhPile:'已销毁', endTurn:'结束回合', pressE:'按 E', release:'松手打出', rotate:'横屏查看效果更好',
+    perTurn:'/回合', perTurnSp:' / 回合',
+    date: t => { const m = 2 + t; return m > 12 ? `2028年${m-12}月` : `2027年${m}月`; },
+    turnOf: (t, n) => `第 ${t} / ${n} 回合 · 每回合 1 个月`,
+    tlTitle: (t, d, heat, goal) => `第 ${t} 回合 · ${d}${heat ? ' · 极端高温' : ''}${goal ? ' · 目标截止' : ''}`,
+    money: v => `S$${v}万`,
+    kw: {
+      event:['事件限定','由事件自动发放，可以不用。事件结束时仍未使用，会自动销毁。'],
+      persist:['持续','打出后成为持续生效的政策，每回合结算开支，直到你打出对应的结束牌。事件结束也不会自动停止。'],
+      stop:['结束政策','启动持续政策时获得。打出后停止该政策及其开支，然后销毁。'],
+      retain:['保留','回合结束时不会被弃置，留在手中。'],
+      exhaust:['销毁','打出后移出本局牌组。'],
+    },
+    type:{policy:'政策', power:'持续政策', event:'事件应急', stop:'结束政策'}, typeOngoing:' · 持续',
+    ribbon:'事件限定 · 高温', givesStop: n => `打出后获得「${n}」。`, stopExhaust:'打出后<k>销毁</k>。',
+    cards:{
+      batch:['组屋批量绿化','选择一栋组屋：它与左右相邻的组屋一起进行生态改造，每栋只需 {$60}。'],
+      plant:['社区种树日','选择一块空地，免费建成口袋公园，覆盖周边 1 格组屋。'],
+      subsidy:['能源电费补贴','<k>持续</k>：热压力 ≥2 的组屋，高温宜居惩罚减半。每回合 −{$30}。'],
+      cool:['开放避暑点','本回合结算时，社区俱乐部和熟食中心周边组屋热压力 −1。'],
+      stopSubsidy:['结束能源补贴','停止「能源电费补贴」及其每回合支出。'],
+      visit:['热浪入户走访','抽 2 张牌。在地图上标出热压力最高的 3 栋组屋。'],
+      saver:['公共设施节能','永久：高温期间公共设施的额外电费减半。'],
+      fund:['绿地养护基金','<k>持续</k>：公共绿地覆盖半径 +1。每回合 −{$12}。'],
+      stopFund:['结束养护基金','停止「绿地养护基金」及其每回合支出。'],
+      reserve:['储备金调拨','从市镇理事会储备调拨：财政 +{$50}。'],
+      shade:['熟食中心遮荫','选择熟食中心：加装遮荫与通风，周边 1 格组屋热压力永久 −1。'],
+    },
+    fin:{income:'市镇收入', parks:'公共绿地维护', ups:'改造组屋维护', civic:'公共设施电费', heatPower:'高温额外电费', subsidy:'能源电费补贴', fund:'绿地养护基金'},
+    hawker:'熟食中心', cc:'社区俱乐部', heatBadge: n => '热' + n,
+    fUpg:'生态改造', fPark:'+ 绿地', fShade:'遮荫改造', fOut: d => `−${d} 人`, fIn: d => `+${d} 人`, fLive: v => `宜居 ${v}`,
+    noPP:'政治点数不足', partial:'财政不足，部分组屋未能改造',
+    started: (a, b) => `已启动「${a}」，获得「${b}」`, stopped: a => `已停止「${a}」`,
+    coolOn:'避暑点已开放：本回合结算生效', saverOn:'公共设施节能改造完成', reserveOn: m => `财政 +${m}`, reshuffle:'弃牌堆已洗入抽牌堆',
+    goalEarly: (m) => `阶段目标提前完成：${m}，政治点上限 +1`, goalDone:'阶段目标完成', goalFail:'阶段目标未完成：下回合政治点 −1，补救任务已开启',
+    remDone: m => `补救任务完成：${m}`, remFail:'补救任务未完成',
+    heatEnd: n => n ? `极端高温结束：${n} 张未使用的应急卡已销毁` : '极端高温结束', subsidyStill:'「能源电费补贴」仍在生效：效果大幅下降，支出照旧',
+    bannerT: t => `第 ${t} 回合`, bannerHeat:' · 极端高温持续中', bannerHeatEnd:' · 高温已结束',
+    repSrc:'规则引擎结算 · 确定值', repTitle: t => `第 ${t} 回合结算`, repTotal:'财政合计',
+    repFoot: (a, b, blks) => `社区实际宜居度 <b class="num">${a} → ${b}</b>${blks.length ? `；${blks.join('、')} 有居民迁出` : ''}`,
+    endTitle:'试玩结束', endSub:'12 个回合已完成。以下为规则引擎的最终结算。', endLive:'社区实际宜居度', endPop:'人口', endFin:'财政', endUps:'完成生态改造的组屋', endParks:'公共绿地', again:'重新开始',
+    evOn:'事件 · 进行中', evTitle: l => `极端高温 · 热指数 ${l} 级`,
+    evDesc:'逐栋计算热压力。组屋自身的生态改造和公共绿地覆盖都能降低压力。居民制冷开支上升会拉低实际宜居度。',
+    evUntil:'持续至', turnsLeft: (d, n) => `${d} · 剩 ${n} 回合`, evHot:'热压力 ≥2 的组屋', ofBlocks: (a, b) => `${a} / ${b} 栋`, evExtra:'公共设施额外电费',
+    evGrant: list => `应急卡 ${list.map(n => '「' + n + '」').join('')} 未使用的话，会在事件结束时销毁。`,
+    evOff:'事件', evNone:'暂无进行中的事件', evEnded: d => `极端高温已于 ${d} 结束。`,
+    evSubsidyLeft:'高温期间启动的能源补贴仍在支出，需要你手动结束。', evCalm:'利用这段时间推进绿化与改造。',
+    goalEyebrow:'阶段目标', goalTitle:'撑过热季', goalDesc: (t) => `第 ${t} 回合结束前，社区实际宜居度达到 70。`,
+    gDone:'已完成', gFail:'未完成', gDue: (d, n) => `截止 ${d} · 剩 ${n} 回合`,
+    rEarly:'提前完成', rEarlyV: m => `${m}，政治点上限 +1`, rMiss:'未完成', rMissV:'下回合政治点 −1，并开启补救任务',
+    rem: (t, a, n, st) => `补救任务：第 ${t} 回合前再改造 ${n} 栋组屋（${a}/${n}）${st === 'done' ? ' · 已完成' : st === 'fail' ? ' · 失败' : ''}`,
+    upgCount:'已生态改造',
+    powersH:'生效中的政策', powerBadge:'持', permBadge:'永', subsidyWeak:'高温已过，效果仅剩 +1 宜居',
+    powersEmpty:'暂无持续政策。打出带「持续」的牌后会显示在这里。', saverName:'公共设施节能', saverDesc:'高温额外电费减半',
+    close:'关闭', advEng:'引擎计算 · 确定值', advEngR:'来自游戏规则', advAi:'AI 判断 · 建议', advAiR:'可能不准确', advHl:'在手牌中标出相关的牌',
+    advNote:'顾问只读取当前局面并给出解释，不会替你出牌，也不会修改任何数值。',
+    eLive: v => `社区实际宜居度 <b>${v}</b>，目标 70。`, eFin: m => `本回合预计财政 <b>${m}</b>。`,
+    eHot: (n, list, more) => `热压力 ≥2 的组屋 <b>${n}</b> 栋${n ? '：' + list.join('、') + (more ? ' 等' : '') : ''}。`,
+    eSub: (a, b, m) => `若启动能源补贴：宜居度 <b>${a} → ${b}</b>，每回合 −${m}。`, eCool: (a, b) => `若开放避暑点：本回合宜居度 <b>${a} → ${b}</b>。`,
+    eSubWeak: m => `能源补贴当前只带来 <b>+1</b> 宜居，但仍每回合支出 <b>${m}</b>。`,
+    aHot:'高温还会持续，热压力集中在没有绿地覆盖、也未改造的组屋。先把这几栋处理掉，比全区平均撒钱更划算。',
+    aSub:'能源补贴见效快，但它会一直扣钱，直到你打出结束牌。启动前想好在哪个回合关掉它。',
+    aSubEnd:'高温已经过去，这笔补贴几乎没有作用了。可以考虑打出「结束能源补贴」。',
+    aUnc: (n, list) => `有 ${n} 栋组屋既不在绿地覆盖内、也没有改造：${list.join('、')}。在它们旁边的空地种树，可以一次覆盖好几栋。`,
+    aLow:'财政余额偏低，维护费和电费会继续扣。下一步改造前，先确认还剩多少余量。', aCalm:'局势平稳。可以考虑把钱投在长期改造上，为下一次热季做准备。',
+    tBlk: b => `Blk ${b} 组屋`, tRes:'居民', tUpg:'生态改造', tDone:'已完成', tNot:'未改造', tCov:'公共绿地覆盖', yes:'是', no:'否', tBase:'基础宜居度',
+    tStress:'热压力', tPen:'高温惩罚', tHalved:'（补贴减半）', tActual:'实际宜居度', tClickUpg: m => `点击：生态改造 ${m}`,
+    tEmpty:'空地', tParkCost:'可建造公共绿地', tClickBuild:'点击建造', tPark:'公共绿地', tRadius:'覆盖半径', tiles: n => `${n} 格`, tUpkeep:'维护费',
+    tKind:'性质', tAmenity:'公共民生设施', tShade:'遮荫改造', tNotYet:'未进行', tFacility:'公共设施', tCarpark:'多层停车场', tConvert:'可收回改作绿地', tClickView:'点击查看',
+    pUpgT: b => `Blk ${b} 生态改造`, pUpgB:'屋顶绿化与立面种植箱。只提升本栋的基础宜居度，降低高温热压力。不增加住房容量。',
+    pParkT:'建造公共绿地', pParkB: (r, m) => `覆盖周边 ${r} 格内的组屋：基础宜居度上升，热压力降低。每回合维护 ${m}。`,
+    pCarT:'停车场改作绿地', pCarB:'收回现有用地并重新规划为公共绿地。成本比空地更高。', build: m => `建造 · ${m}`, cancel:'取消',
+    vDraw:'抽牌堆', vDrawS: n => `共 ${n} 张，按名称排列（不显示抽取顺序）`, vDisc:'弃牌堆', vDiscS: n => `共 ${n} 张。抽牌堆用完时会洗回抽牌堆。`,
+    vExh:'已销毁', vExhS:'这些牌已移出本局牌组。', vEmpty:'这里还没有牌。',
+    aDraw:'查看抽牌堆', aDisc:'查看弃牌堆', aExh:'查看已销毁的牌', aTimeline:'回合进度',
+  },
+  en: {
+    docTitle:'HDB Eco Community', place:'Toa Payoh East', placeSub:'Lakeside · HDB eco-retrofit',
+    finance:'Finance', popCap:'Residents / Capacity', liveLab:'Liveability',
+    advisor:'AI Policy Advisor', advisorSub:'Explains the situation. Never plays for you.', protoNote:'Prototype note: all numbers are placeholders for showing the rules and interactions.',
+    pp:'Political', drawPile:'Draw', discPile:'Discard', exhPile:'Exhausted', endTurn:'End Turn', pressE:'Press E', release:'Release to play', rotate:'Best viewed in landscape',
+    perTurn:'/turn', perTurnSp:' / turn',
+    date: t => { const m = 2 + t; return m > 12 ? `${MON[m-13]} 2028` : `${MON[m-1]} 2027`; },
+    turnOf: (t, n) => `Turn ${t} / ${n} · 1 month per turn`,
+    tlTitle: (t, d, heat, goal) => `Turn ${t} · ${d}${heat ? ' · Extreme heat' : ''}${goal ? ' · Goal deadline' : ''}`,
+    money: v => { const a = Math.abs(v); return a >= 100 ? `S$${(+(a/100).toFixed(2))}M` : `S$${a*10}k`; },
+    kw: {
+      event:['Event-only','Granted automatically by an event. You may leave it unused. If it is still unused when the event ends, it is exhausted.'],
+      persist:['Ongoing','Becomes an ongoing policy. Its cost is charged every turn until you play its matching End card. It does not stop when an event ends.'],
+      stop:['End Policy','Granted when you start an ongoing policy. Play it to stop that policy and its cost. Then it is exhausted.'],
+      retain:['Retain','Stays in your hand at the end of the turn instead of being discarded.'],
+      exhaust:['Exhaust','Removed from your deck for the rest of the game after it is played.'],
+    },
+    type:{policy:'Policy', power:'Ongoing Policy', event:'Emergency', stop:'End Policy'}, typeOngoing:' · Ongoing',
+    ribbon:'Event-only · Heat', givesStop: n => `Adds \"${n}\".`, stopExhaust:'<k>Exhaust</k>.',
+    cards:{
+      batch:['Bulk Block Greening','Pick a block: retrofit it and the blocks on either side for {$60} each.'],
+      plant:['Planting Day','Pick an empty lot: build a free pocket park covering blocks within 1 tile.'],
+      subsidy:['Energy Bill Subsidy','<k>Ongoing</k>: blocks at heat stress ≥2 take half the heat penalty. −{$30} per turn.'],
+      cool:['Cooling Centres','At this turn\'s settlement, blocks next to the CC and hawker centre get −1 heat stress.'],
+      stopSubsidy:['End Energy Subsidy','Stop the Energy Bill Subsidy and its per-turn cost.'],
+      visit:['Heatwave Visits','Draw 2 cards. Mark the 3 blocks under the most heat stress.'],
+      saver:['Power Saving','Permanent: the heat power surcharge on public facilities is halved.'],
+      fund:['Green Upkeep Fund','<k>Ongoing</k>: green space coverage radius +1. −{$12} per turn.'],
+      stopFund:['End Upkeep Fund','Stop the Green Upkeep Fund and its per-turn cost.'],
+      reserve:['Reserve Transfer','Draw on Town Council reserves: finance +{$50}.'],
+      shade:['Hawker Shading','Pick the hawker centre: add shade and fans. Blocks within 1 tile get −1 heat stress for good.'],
+    },
+    fin:{income:'Town income', parks:'Green space upkeep', ups:'Retrofit upkeep', civic:'Public facility power', heatPower:'Heat power surcharge', subsidy:'Energy Bill Subsidy', fund:'Green Upkeep Fund'},
+    hawker:'Hawker Centre', cc:'Community Club', heatBadge: n => 'Heat ' + n,
+    fUpg:'Retrofitted', fPark:'+ Park', fShade:'Shaded', fOut: d => `−${d} residents`, fIn: d => `+${d} residents`, fLive: v => `Liveability ${v}`,
+    noPP:'Not enough political points', partial:'Not enough funds: some blocks were not retrofitted',
+    started: (a, b) => `Started \"${a}\". \"${b}\" added to your hand.`, stopped: a => `Stopped \"${a}\".`,
+    coolOn:'Cooling centres open: applies at this turn\'s settlement', saverOn:'Public facility power saving in place', reserveOn: m => `Finance +${m}`, reshuffle:'Discard pile shuffled into the draw pile',
+    goalEarly: (m) => `Goal met early: +${m}, max political points +1`, goalDone:'Goal met', goalFail:'Goal missed: −1 political point next turn. Recovery task started.',
+    remDone: m => `Recovery task complete: +${m}`, remFail:'Recovery task failed',
+    heatEnd: n => n ? `Extreme heat is over: ${n} unused emergency card${n > 1 ? 's' : ''} exhausted` : 'Extreme heat is over', subsidyStill:'Energy Bill Subsidy is still running: much weaker now, same cost',
+    bannerT: t => `Turn ${t}`, bannerHeat:' · Extreme heat ongoing', bannerHeatEnd:' · The heat is over',
+    repSrc:'Rules engine · exact values', repTitle: t => `Turn ${t} settlement`, repTotal:'Finance total',
+    repFoot: (a, b, blks) => `Liveability <b class="num">${a} → ${b}</b>${blks.length ? `. Residents moved out of ${blks.join(', ')}.` : ''}`,
+    endTitle:'Demo complete', endSub:'All 12 turns played. Final results from the rules engine.', endLive:'Liveability', endPop:'Residents', endFin:'Finance', endUps:'Retrofitted blocks', endParks:'Green spaces', again:'Play again',
+    evOn:'Event · Active', evTitle: l => `Extreme Heat · Level ${l}`,
+    evDesc:'Heat stress is worked out per block. Retrofits and green space lower it, and cooling bills pull liveability down.',
+    evUntil:'Lasts until', turnsLeft: (d, n) => `${d} · ${n} turn${n > 1 ? 's' : ''} left`, evHot:'Blocks at heat stress ≥2', ofBlocks: (a, b) => `${a} / ${b}`, evExtra:'Extra public power cost',
+    evGrant: list => `${list.length} emergency card${list.length > 1 ? 's' : ''} from this event will be exhausted if still unused when it ends.`,
+    evOff:'Event', evNone:'No active event', evEnded: d => `The extreme heat ended in ${d}. `,
+    evSubsidyLeft:'The energy subsidy you started during the heat is still being paid. You have to end it yourself.', evCalm:'Use this time to push greening and retrofits.',
+    goalEyebrow:'Stage goal', goalTitle:'Survive the Hot Season', goalDesc: (t) => `Reach liveability 70 by the end of turn ${t}.`,
+    gDone:'Complete', gFail:'Missed', gDue: (d, n) => `Due ${d} · ${n} left`,
+    rEarly:'Early bonus', rEarlyV: m => `+${m}, +1 max political points`, rMiss:'If missed', rMissV:'−1 political point, recovery task',
+    rem: (t, a, n, st) => `Recovery task: retrofit ${n} more blocks by turn ${t} (${a}/${n})${st === 'done' ? ' · done' : st === 'fail' ? ' · failed' : ''}`,
+    upgCount:'Retrofitted',
+    powersH:'Active policies', powerBadge:'ON', permBadge:'∞', subsidyWeak:'Heat is over: only +1 liveability now',
+    powersEmpty:'No ongoing policies. Cards marked Ongoing show up here once played.', saverName:'Power Saving', saverDesc:'Heat power surcharge halved',
+    close:'Close', advEng:'Engine · exact values', advEngR:'From the game rules', advAi:'AI judgement · advice', advAiR:'May be wrong', advHl:'Highlight relevant cards in hand',
+    advNote:'The advisor only reads the current state and explains it. It never plays cards or changes any numbers.',
+    eLive: v => `Liveability is <b>${v}</b>. The target is 70.`, eFin: m => `Projected finance this turn: <b>${m}</b>.`,
+    eHot: (n, list, more) => `<b>${n}</b> block${n === 1 ? '' : 's'} at heat stress ≥2${n ? ': ' + list.join(', ') + (more ? ' and more' : '') : ''}.`,
+    eSub: (a, b, m) => `If you start the energy subsidy: liveability <b>${a} → ${b}</b>, −${m} per turn.`, eCool: (a, b) => `If you open cooling centres: liveability this turn <b>${a} → ${b}</b>.`,
+    eSubWeak: m => `The energy subsidy now adds only <b>+1</b> liveability but still costs <b>${m}</b> per turn.`,
+    aHot:'The heat will continue. Stress is concentrated in blocks with no green space coverage and no retrofit. Fixing those first is better value than spreading money across the whole precinct.',
+    aSub:'The energy subsidy works fast, but it keeps costing money until you play its End card. Decide which turn you will end it before you start it.',
+    aSubEnd:'The heat is over and this subsidy does almost nothing now. Consider playing \"End Energy Subsidy\".',
+    aUnc: (n, list) => `${n} blocks have neither green space coverage nor a retrofit: ${list.join(', ')}. Planting on an empty lot next to them can cover several at once.`,
+    aLow:'Finance is running low, and upkeep and power costs keep coming. Check your margin before the next retrofit.', aCalm:'Things are stable. Consider putting money into long-term retrofits to prepare for the next hot season.',
+    tBlk: b => `Blk ${b}`, tRes:'Residents', tUpg:'Eco-retrofit', tDone:'Done', tNot:'Not yet', tCov:'Green space coverage', yes:'Yes', no:'No', tBase:'Base liveability',
+    tStress:'Heat stress', tPen:'Heat penalty', tHalved:' (halved by subsidy)', tActual:'Actual liveability', tClickUpg: m => `Click: eco-retrofit for ${m}`,
+    tEmpty:'Empty lot', tParkCost:'Build green space', tClickBuild:'Click to build', tPark:'Green space', tRadius:'Coverage radius', tiles: n => `${n} tile${n > 1 ? 's' : ''}`, tUpkeep:'Upkeep',
+    tKind:'Type', tAmenity:'Public amenity', tShade:'Shading', tNotYet:'Not yet', tFacility:'Public facility', tCarpark:'Multi-storey car park', tConvert:'Convert to green space', tClickView:'Click for details',
+    pUpgT: b => `Eco-retrofit Blk ${b}`, pUpgB:'Rooftop greening and façade planters. Raises this block\'s base liveability and lowers its heat stress. Does not add housing capacity.',
+    pParkT:'Build green space', pParkB: (r, m) => `Covers blocks within ${r} tile${r > 1 ? 's' : ''}: raises base liveability and lowers heat stress. Upkeep ${m} per turn.`,
+    pCarT:'Convert car park to green space', pCarB:'Reclaim the existing land and replan it as green space. Costs more than an empty lot.', build: m => `Build · ${m}`, cancel:'Cancel',
+    vDraw:'Draw pile', vDrawS: n => `${n} cards, sorted by name (draw order hidden)`, vDisc:'Discard pile', vDiscS: n => `${n} cards. Shuffled back into the draw pile when it runs out.`,
+    vExh:'Exhausted', vExhS:'These cards are out of your deck for this game.', vEmpty:'No cards here yet.',
+    aDraw:'View draw pile', aDisc:'View discard pile', aExh:'View exhausted cards', aTimeline:'Turn progress',
+  },
+};
+let lang = 'zh';
+try {
+  const saved = localStorage.getItem('hdb-lang');
+  if (location.hash === '#en' || location.hash === '#zh') lang = location.hash.slice(1);
+  else if (saved === 'en' || saved === 'zh') lang = saved;
+  else lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+} catch (e) { lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en'; }
+const L = () => STR[lang];
+const money = v => L().money(v);
+const signed = v => (v < 0 ? '−' : '+') + money(Math.abs(v));
+
+function applyStatic(){
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = L().docTitle;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = L()[el.dataset.i18n]; });
+  document.querySelectorAll('#lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  $('drawPile').setAttribute('aria-label', L().aDraw); $('discPile').setAttribute('aria-label', L().aDisc); $('exhPile').setAttribute('aria-label', L().aExh);
+  $('timeline').setAttribute('aria-label', L().aTimeline);
+  $('adv').setAttribute('aria-label', L().advisor);
+}
+function setLang(l){
+  if (l === lang) return;
+  lang = l;
+  try { localStorage.setItem('hdb-lang', l); } catch (e) {}
+  applyStatic();
+  els.forEach((el, id) => { const c = state.hand.find(h => h.uid === id); if (c) el.innerHTML = cardHTML(c); });
+  $('overlay').hidden = true; $('tip').hidden = true; closePop(); $('report').hidden = true;
+  render();
+}
+document.querySelectorAll('#lang button').forEach(b => {
+  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('pointerdown', e => e.stopPropagation());
+});
 
 /* ================= data ================= */
 // H = HDB 组屋, . = 空地, P = 公共绿地, R = 道路, F = 熟食中心, C = 社区俱乐部, K = 多层停车场
@@ -287,42 +495,25 @@ const MAP = [
   "HH.H.KH.P",
   "H..H..H.H",
 ];
-const KEYWORDS = {
-  '保留': '回合结束时不会被弃置，留在手中。',
-  '持续': '打出后成为持续生效的政策，每回合结算开支，直到你打出对应的结束牌。事件结束也不会自动停止。',
-  '销毁': '打出后移出本局牌组。',
-  '事件限定': '由事件自动发放，可以不用。事件结束时仍未使用，会自动销毁。',
-  '结束政策': '启动持续政策时获得。打出后停止该政策及其开支，然后销毁。',
-};
 const CARDS = {
-  batch:  {name:'组屋批量绿化', cost:2, type:'policy', target:'hdb', art:'batch',
-           text:'选择一栋组屋：它与左右相邻的组屋一起进行生态改造，每栋只需 S$60万。'},
-  plant:  {name:'社区种树日', cost:1, type:'policy', target:'empty', art:'tree',
-           text:'选择一块空地，免费建成口袋公园，覆盖周边 1 格组屋。'},
-  subsidy:{name:'能源电费补贴', cost:1, type:'event', event:true, retain:true, exhaust:true, persist:'subsidy', art:'bolt',
-           text:'<k>持续</k>：热压力 ≥2 的组屋，高温宜居惩罚减半。每回合 −S$30万。'},
-  cool:   {name:'开放避暑点', cost:0, type:'event', event:true, retain:true, exhaust:true, art:'cool',
-           text:'本回合结算时，社区俱乐部和熟食中心周边组屋热压力 −1。'},
-  stopSubsidy:{name:'结束能源补贴', cost:0, type:'stop', retain:true, exhaust:true, stops:'subsidy', art:'stop',
-           text:'停止「能源电费补贴」及其每回合支出。'},
-  visit:  {name:'热浪入户走访', cost:1, type:'policy', art:'visit',
-           text:'抽 2 张牌。在地图上标出热压力最高的 3 栋组屋。'},
-  saver:  {name:'公共设施节能', cost:2, type:'policy', exhaust:true, art:'saver',
-           text:'永久：高温期间公共设施的额外电费减半。'},
-  fund:   {name:'绿地养护基金', cost:1, type:'power', persist:'fund', art:'fund',
-           text:'<k>持续</k>：公共绿地覆盖半径 +1。每回合 −S$12万。'},
-  stopFund:{name:'结束养护基金', cost:0, type:'stop', retain:true, exhaust:true, stops:'fund', art:'stop',
-           text:'停止「绿地养护基金」及其每回合支出。'},
-  reserve:{name:'储备金调拨', cost:1, type:'policy', exhaust:true, art:'coin',
-           text:'从市镇理事会储备调拨：财政 +S$50万。'},
-  shade:  {name:'熟食中心遮荫', cost:1, type:'policy', target:'hawker', art:'shade',
-           text:'选择熟食中心：加装遮荫与通风，周边 1 格组屋热压力永久 −1。'},
+  batch:  {cost:2, type:'policy', target:'hdb', art:'batch'},
+  plant:  {cost:1, type:'policy', target:'empty', art:'tree'},
+  subsidy:{cost:1, type:'event', event:true, retain:true, exhaust:true, persist:'subsidy', art:'bolt'},
+  cool:   {cost:0, type:'event', event:true, retain:true, exhaust:true, art:'cool'},
+  stopSubsidy:{cost:0, type:'stop', retain:true, exhaust:true, stops:'subsidy', art:'stop'},
+  visit:  {cost:1, type:'policy', art:'visit'},
+  saver:  {cost:2, type:'policy', exhaust:true, art:'saver'},
+  fund:   {cost:1, type:'power', persist:'fund', art:'fund'},
+  stopFund:{cost:0, type:'stop', retain:true, exhaust:true, stops:'fund', art:'stop'},
+  reserve:{cost:1, type:'policy', exhaust:true, art:'coin'},
+  shade:  {cost:1, type:'policy', target:'hawker', art:'shade'},
 };
+const cname = key => L().cards[key][0];
+const ctext = key => L().cards[key][1].replace(/\{\$(\d+)\}/g, (_, n) => money(+n));
 const POLICY = {
-  subsidy:{name:'能源电费补贴', cost:30, stop:'stopSubsidy', ev:true},
-  fund:   {name:'绿地养护基金', cost:12, stop:'stopFund'},
+  subsidy:{card:'subsidy', cost:30, stop:'stopSubsidy', ev:true},
+  fund:   {card:'fund', cost:12, stop:'stopFund'},
 };
-const TYPE_LABEL = {policy:'政策', power:'持续政策', event:'事件应急', stop:'结束政策'};
 const HEAT = {4:2, 5:3, 6:2};           // 回合 → 热指数等级（极端高温：第 4–6 回合）
 const EVENT_END = 6, GOAL_DEADLINE = 7, MAX_TURN = 12;
 const BASE_UPG_COST = 120, PARK_COST = 80, CARPARK_COST = 150;
@@ -387,17 +578,17 @@ function finance(opt = {}){
   const parks = tiles.filter(t => t.kind === 'park').length;
   const ups = hdbs.filter(b => b.up).length;
   const civic = tiles.filter(t => ['hawker','cc','carpark'].includes(t.kind));
-  const L = [['市镇收入', Math.round(pop * 0.016)], ['公共绿地维护', -parks*4], ['改造组屋维护', -ups*1], ['公共设施电费', -civic.length*4]];
+  const Ls = [['income', Math.round(pop * 0.016)], ['parks', -parks*4], ['ups', -ups*1], ['civic', -civic.length*4]];
   if (heat){
     let extra = 0;
     civic.forEach(t => { extra += 4 * heat * (state.saver ? 0.5 : 1) * (t.shaded ? 0.5 : 1); });
-    L.push(['高温额外电费', -Math.round(extra)]);
+    Ls.push(['heatPower', -Math.round(extra)]);
   }
-  if (opt.subsidy ?? state.policies.subsidy) L.push(['能源电费补贴', -POLICY.subsidy.cost]);
-  if (state.policies.fund) L.push(['绿地养护基金', -POLICY.fund.cost]);
-  return L;
+  if (opt.subsidy ?? state.policies.subsidy) Ls.push(['subsidy', -POLICY.subsidy.cost]);
+  if (state.policies.fund) Ls.push(['fund', -POLICY.fund.cost]);
+  return Ls;
 }
-const sum = L => L.reduce((a, [, v]) => a + v, 0);
+const sum = Ls => Ls.reduce((a, [, v]) => a + v, 0);
 
 /* ================= canvas city ================= */
 const TW = 84, TH = 42, OX = 700, OY = 178;
@@ -428,13 +619,10 @@ function drawCity(){
   ctx.clearRect(0,0,W,H);
   const heat = heatLv(state.turn), g = greenness();
   const ground = mix('#7f857c', '#6f9a62', g);
-  // plinth
-  const c0 = diamond(tileAt(0,0)), c1 = diamond(tileAt(8,0)), c2 = diamond(tileAt(8,7)), c3 = diamond(tileAt(0,7));
-  poly([[c0[0][0],c0[0][1]-2],[c1[1][0]+2,c1[1][1]],[c2[2][0],c2[2][1]+2],[c3[3][0]-2,c3[3][1]]], '#0000');
+  const c1 = diamond(tileAt(8,0)), c2 = diamond(tileAt(8,7)), c3 = diamond(tileAt(0,7));
   const lip = 16;
   poly([c3[3],c2[2],[c2[2][0],c2[2][1]+lip],[c3[3][0],c3[3][1]+lip]], '#2f3a35');
   poly([c2[2],c1[1],[c1[1][0],c1[1][1]+lip],[c2[2][0],c2[2][1]+lip]], '#232d29');
-  // ground
   tiles.forEach(t => {
     const d = diamond(t);
     let f = ground;
@@ -445,12 +633,11 @@ function drawCity(){
     poly(d, f, '#00000022');
     if (t.kind === 'road'){
       const [x, y] = iso(t.gx, t.gy); ctx.strokeStyle = '#d9d3c455'; ctx.setLineDash([5,6]); ctx.beginPath();
-      if (t.gy === 2 || t.gy === 5){ ctx.moveTo(x-TW/4, y+TH/4); ctx.lineTo(x+TW/4, y+TH*3/4); }
+      ctx.moveTo(x-TW/4, y+TH/4); ctx.lineTo(x+TW/4, y+TH*3/4);
       ctx.stroke(); ctx.setLineDash([]);
     }
     if (t.kind === 'empty'){ ctx.setLineDash([3,4]); poly(diamond(t,.78), null, '#f2eee366'); ctx.setLineDash([]); }
   });
-  // coverage preview
   let covSrc = null;
   if (hover && hover.kind === 'park') covSrc = hover;
   if (drag && drag.card && CARDS[drag.card.key].target === 'empty' && targetHover) covSrc = targetHover;
@@ -458,7 +645,6 @@ function drawCity(){
     const r = radius();
     tiles.forEach(t => { if (cheb(t, covSrc) <= r && t !== covSrc) poly(diamond(t,.94), '#8ff09433', '#8ff09477'); });
   }
-  // valid target pulses
   if (drag && drag.card && CARDS[drag.card.key].target){
     const a = .35 + .25*Math.sin(now/180);
     tiles.filter(t => validTarget(drag.card, t)).forEach(t => poly(diamond(t,.96), `rgba(230,184,74,${a*.35})`, `rgba(230,184,74,${a+.2})`));
@@ -466,7 +652,7 @@ function drawCity(){
   if (hover && !drag) poly(diamond(hover,.98), '#ffffff14', '#ffffffaa');
   if (targetHover) { ctx.lineWidth = 2.5; poly(diamond(targetHover,.98), '#6cc46f33', '#b9ffbf'); ctx.lineWidth = 1; }
 
-  // objects back to front
+  const labels = [];
   [...tiles].sort((a,b) => (a.gx+a.gy)-(b.gx+b.gy) || a.gx-b.gx).forEach(t => {
     const [x, y] = iso(t.gx, t.gy), cx = x, cy = y + TH/2;
     if (t.kind === 'park'){
@@ -474,17 +660,18 @@ function drawCity(){
     }
     if (t.kind === 'hawker'){
       prism(t, .86, 18, '#c9b79a', '#a1907a', '#8a7a66');
-      const u = diamond(t, .92, 18), peak = [[u[0][0],u[0][1]-12],[u[1][0],u[1][1]-12],[u[2][0],u[2][1]-12],[u[3][0],u[3][1]-12]];
-      poly([u[3],u[2],[ (u[2][0]+u[3][0])/2+0, (u[2][1]+u[3][1])/2-14 ]], t.shaded ? '#4f9a52' : '#c4502f');
-      poly([u[0],u[3],[ (u[2][0]+u[3][0])/2, (u[2][1]+u[3][1])/2-14 ],[ (u[0][0]+u[1][0])/2, (u[0][1]+u[1][1])/2-14 ]], t.shaded ? '#62b064' : '#e0663f');
-      poly([u[1],u[2],[ (u[2][0]+u[3][0])/2, (u[2][1]+u[3][1])/2-14 ],[ (u[0][0]+u[1][0])/2, (u[0][1]+u[1][1])/2-14 ]], t.shaded ? '#3e8443' : '#a6402a');
-      label(cx, cy-44, '熟食中心');
+      const u = diamond(t, .92, 18);
+      const m1 = [(u[2][0]+u[3][0])/2, (u[2][1]+u[3][1])/2-14], m0 = [(u[0][0]+u[1][0])/2, (u[0][1]+u[1][1])/2-14];
+      poly([u[3],u[2],m1], t.shaded ? '#4f9a52' : '#c4502f');
+      poly([u[0],u[3],m1,m0], t.shaded ? '#62b064' : '#e0663f');
+      poly([u[1],u[2],m1,m0], t.shaded ? '#3e8443' : '#a6402a');
+      labels.push([cx, cy-44, L().hawker]);
     }
     if (t.kind === 'cc'){
       prism(t, .8, 30, '#7cc0b6', '#4f978e', '#3c7a73');
       ctx.strokeStyle = '#ddd'; ctx.beginPath(); ctx.moveTo(cx+8, cy-30-TH*.2); ctx.lineTo(cx+8, cy-58); ctx.stroke();
       poly([[cx+8,cy-58],[cx+22,cy-54],[cx+8,cy-50]], '#ef5a4c');
-      label(cx, cy-66, '社区俱乐部');
+      labels.push([cx, cy-66, L().cc]);
     }
     if (t.kind === 'carpark'){
       const {b} = prism(t, .84, 34, '#8b908d', '#6e7370', '#5a5e5c');
@@ -492,18 +679,17 @@ function drawCity(){
     }
     if (t.kind === 'hdb') drawHDB(t, cx, cy);
   });
+  labels.forEach(a => label(...a));
 
-  // heat haze over the whole map
   if (heat){
     const gr = ctx.createRadialGradient(OX, OY+120, 40, OX, OY+120, 520);
     gr.addColorStop(0, `rgba(255,122,51,${.05*heat})`); gr.addColorStop(1, 'rgba(255,122,51,0)');
     ctx.fillStyle = gr; ctx.fillRect(0, 56, W, H);
   }
-  // floating numbers
   floats = floats.filter(f => now - f.t0 < 1600);
   floats.forEach(f => {
     const k = (now - f.t0) / 1600;
-    ctx.globalAlpha = 1 - k*k; ctx.font = '700 15px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 1 - k*k; ctx.font = '700 15px "JetBrains Mono", "Noto Sans SC", monospace'; ctx.textAlign = 'center';
     ctx.lineWidth = 3; ctx.strokeStyle = '#000a'; ctx.strokeText(f.text, f.x, f.y - k*40);
     ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y - k*40); ctx.globalAlpha = 1; ctx.lineWidth = 1;
   });
@@ -519,25 +705,22 @@ function drawHDB(t, cx, cy){
   const k = .72, h = t.h;
   const body = t.hue;
   const {b, u} = prism(t, k, h, e.up ? '#5fae5c' : shade(body, .92), shade(body, .86), shade(body, .7));
-  // corridor / window lines
   ctx.lineWidth = 1;
   for (let yy = 9, i = 0; yy < h - 6; yy += 8, i++){
     ctx.strokeStyle = shade(body, .55);
     ctx.beginPath(); ctx.moveTo(b[3][0]+2, b[3][1]-yy); ctx.lineTo(b[2][0], b[2][1]-yy); ctx.lineTo(b[1][0]-2, b[1][1]-yy); ctx.stroke();
-    if (e.up && i % 2 === 0){ // planter boxes along corridors
+    if (e.up && i % 2 === 0){
       ctx.strokeStyle = '#4fa255'; ctx.lineWidth = 2.4;
       ctx.beginPath(); ctx.moveTo(b[3][0]+4, b[3][1]-yy+1.5); ctx.lineTo(b[2][0]-3, b[2][1]-yy+1.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(b[2][0]+3, b[2][1]-yy+1.5); ctx.lineTo(b[1][0]-4, b[1][1]-yy+1.5); ctx.stroke();
       ctx.lineWidth = 1;
     }
   }
-  // coloured band at top (HDB paint scheme)
   poly([[b[3][0],u[3][1]+8],[b[2][0],u[2][1]+8],u[2],u[3]], t.band);
   poly([[b[2][0],u[2][1]+8],[b[1][0],u[1][1]+8],u[1],u[2]], shade(t.band, .8));
   if (e.up){
     [[-8,0],[6,-3],[0,4],[10,3]].forEach(([dx,dy]) => tree(cx+dx, cy-h+dy+2, .45, '#7fd07a', '#4f9a52'));
   }
-  // heat stress overlay
   if (heat && e.stress > 0){
     const a = .1 * e.stress + .05*Math.sin(now/300 + t.gx);
     poly([b[3],b[2],u[2],u[3]], `rgba(255,110,40,${a})`); poly([b[2],b[1],u[1],u[2]], `rgba(255,90,30,${a})`);
@@ -556,11 +739,13 @@ function drawHDB(t, cx, cy){
   }
 }
 function badge(x, y, n){
+  const s = L().heatBadge(n);
+  ctx.font = '700 10px "Noto Sans SC", sans-serif'; ctx.textAlign = 'center';
+  const w = Math.max(26, ctx.measureText(s).width + 10);
   ctx.fillStyle = n >= 2 ? '#ff7a33' : '#ffb35e';
-  ctx.beginPath(); ctx.roundRect(x - 13, y - 9, 26, 16, 8); ctx.fill();
-  ctx.fillStyle = '#2a1300'; ctx.font = '700 10px "Noto Sans SC", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('热' + n, x, y + 3);
+  ctx.beginPath(); ctx.roundRect(x - w/2, y - 9, w, 16, 8); ctx.fill();
+  ctx.fillStyle = '#2a1300'; ctx.fillText(s, x, y + 3);
 }
-// hit test: front-most building outline first, then tile diamond
 function pip(p, pts){ let c = false; for (let i = 0, j = pts.length-1; i < pts.length; j = i++){ const [xi,yi]=pts[i],[xj,yj]=pts[j]; if(((yi>p[1])!==(yj>p[1])) && p[0] < (xj-xi)*(p[1]-yi)/(yj-yi)+xi) c=!c; } return c; }
 function pick(x, y){
   const order = [...tiles].sort((a,b) => (b.gx+b.gy)-(a.gx+a.gy));
@@ -588,22 +773,22 @@ const ART = {
 };
 function kwOf(card){
   const c = CARDS[card.key], k = [];
-  if (c.event) k.push('事件限定');
-  if (c.persist) k.push('持续');
-  if (c.stops) k.push('结束政策');
-  if (c.retain) k.push('保留');
-  if (c.exhaust) k.push('销毁');
+  if (c.event) k.push('event');
+  if (c.persist) k.push('persist');
+  if (c.stops) k.push('stop');
+  if (c.retain) k.push('retain');
+  if (c.exhaust) k.push('exhaust');
   return k;
 }
 function cardHTML(card){
-  const c = CARDS[card.key];
-  const tags = [c.retain && '保留', c.exhaust && '销毁'].filter(Boolean).map(s => `<span>${s}</span>`).join('');
-  const extra = c.persist ? `打出后获得「${CARDS[POLICY[c.persist].stop].name}」。` : (c.stops ? '打出后<k>销毁</k>。' : '');
-  const ev = c.event ? `<div class="ribbon">事件限定 · 高温</div>` : '';
-  return `<div class="cf"><div class="cost">${c.cost}</div>${ev}<div class="cname">${c.name}</div>
+  const c = CARDS[card.key], T = L();
+  const tags = [c.retain && T.kw.retain[0], c.exhaust && T.kw.exhaust[0]].filter(Boolean).map(s => `<span>${s}</span>`).join('');
+  const extra = c.persist ? T.givesStop(cname(POLICY[c.persist].stop)) : (c.stops ? T.stopExhaust : '');
+  const ev = c.event ? `<div class="ribbon">${T.ribbon}</div>` : '';
+  return `<div class="cf"><div class="cost">${c.cost}</div>${ev}<div class="cname">${cname(card.key)}</div>
     <div class="art"><svg viewBox="0 0 132 74" preserveAspectRatio="xMidYMid slice">${ART[c.art]}</svg></div>
-    <div class="ctype">${TYPE_LABEL[c.type]}${c.persist ? ' · 持续' : ''}</div>
-    <div class="ctext"><div>${c.text}${extra ? ' ' + extra : ''}</div></div>
+    <div class="ctype">${T.type[c.type]}${c.persist ? T.typeOngoing : ''}</div>
+    <div class="ctext"><div>${ctext(card.key)}${extra ? ' ' + extra : ''}</div></div>
     <div class="ctags">${tags}</div></div>`;
 }
 const els = new Map();
@@ -660,10 +845,10 @@ function showKw(){
   if (hoverIdx < 0 || drag || !state.hand[hoverIdx]){ tip.hidden = true; return; }
   const card = state.hand[hoverIdx], k = kwOf(card);
   if (!k.length){ tip.hidden = true; return; }
-  tip.innerHTML = k.map(w => `<div><b>${w}</b>${KEYWORDS[w]}</div>`).join('');
+  tip.innerHTML = k.map(w => `<div><b>${L().kw[w][0]}</b>${L().kw[w][1]}</div>`).join('');
   const x = slots()[hoverIdx].x;
-  tip.style.left = (x + 116 + 200 > W ? x - 116 - 200 : x + 116) + 'px';
-  tip.style.top = '470px';
+  tip.style.left = (x + 116 + 210 > W ? x - 116 - 210 : x + 116) + 'px';
+  tip.style.top = (lang === 'en' ? 420 : 460) + 'px';
   tip.hidden = false;
 }
 function handIndexAt(x, y){
@@ -705,50 +890,49 @@ function validTarget(card, t){
 function canPlay(card){
   const c = CARDS[card.key];
   if (state.busy) return false;
-  if (c.cost > state.pp){ say('政治点数不足'); return false; }
+  if (c.cost > state.pp){ say(L().noPP, 'warn', true); return false; }
   return true;
 }
-function say(msg, cls = 'warn'){
+function say(msg, cls = 'warn', shakeOrb = false){
   const t = $('toast'), d = document.createElement('div');
   d.className = cls; d.textContent = msg; t.appendChild(d);
   setTimeout(() => d.remove(), 2600);
-  if (msg === '政治点数不足'){ const o = $('orb'); o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); }
+  if (shakeOrb){ const o = $('orb'); o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); }
 }
 function pushFloat(t, text, color){ const [x, y] = iso(t.gx, t.gy); floats.push({x, y: y + TH/2 - (t.h || 20) - 20, text, color, t0: performance.now()}); }
 function play(card, target){
-  const c = CARDS[card.key];
+  const c = CARDS[card.key], T = L();
   state.pp -= c.cost;
   state.hand = state.hand.filter(h => h !== card);
   const el = els.get(card.uid);
   el.classList.remove('dragging','playable'); el.classList.add('flying');
   el.style.zIndex = 200;
   el.style.transform = `translate(640px,330px) scale(1.15)`;
-  // effects
   switch (card.key){
     case 'batch': {
       const group = [target, tileAt(target.gx-1,target.gy), tileAt(target.gx+1,target.gy)].filter(b => b && b.kind === 'hdb' && !b.up);
       const affordable = group.slice(0, Math.floor(state.money / 60));
-      affordable.forEach(b => { b.up = true; state.money -= 60; pushFloat(b, '生态改造', '#b9ffbf'); });
-      if (affordable.length < group.length) say('财政不足，部分组屋未能改造');
+      affordable.forEach(b => { b.up = true; state.money -= 60; pushFloat(b, T.fUpg, '#b9ffbf'); });
+      if (affordable.length < group.length) say(T.partial);
       break;
     }
-    case 'plant': target.kind = 'park'; pushFloat(target, '+ 绿地', '#b9ffbf'); break;
+    case 'plant': target.kind = 'park'; pushFloat(target, T.fPark, '#b9ffbf'); break;
     case 'subsidy': case 'fund': {
       state.policies[c.persist] = true;
       const stop = newCard(POLICY[c.persist].stop); state.hand.push(stop);
-      say(`已启动「${c.name}」，获得「${CARDS[stop.key].name}」`, 'good');
+      say(T.started(cname(card.key), cname(stop.key)), 'good');
       break;
     }
-    case 'stopSubsidy': case 'stopFund': state.policies[c.stops] = false; say(`已停止「${POLICY[c.stops].name}」`, 'good'); break;
-    case 'cool': state.cool = true; say('避暑点已开放：本回合结算生效', 'good'); break;
+    case 'stopSubsidy': case 'stopFund': state.policies[c.stops] = false; say(T.stopped(cname(POLICY[c.stops].card)), 'good'); break;
+    case 'cool': state.cool = true; say(T.coolOn, 'good'); break;
     case 'visit': {
       drawCards(2);
       state.marked = [...hdbs].sort((a, b) => evalB(b).stress - evalB(a).stress || evalB(a).actual - evalB(b).actual).slice(0, 3);
       break;
     }
-    case 'saver': state.saver = true; say('公共设施节能改造完成', 'good'); break;
-    case 'reserve': state.money += 50; say('财政 +S$50万', 'good'); break;
-    case 'shade': target.shaded = true; pushFloat(target, '遮荫改造', '#b9ffbf'); break;
+    case 'saver': state.saver = true; say(T.saverOn, 'good'); break;
+    case 'reserve': state.money += 50; say(T.reserveOn(money(50)), 'good'); break;
+    case 'shade': target.shaded = true; pushFloat(target, T.fShade, '#b9ffbf'); break;
   }
   const dest = c.exhaust ? state.exhaust : state.discard;
   setTimeout(() => {
@@ -764,7 +948,7 @@ function drawCards(n){
     if (!state.draw.length){
       if (!state.discard.length) break;
       state.draw = shuffle(state.discard); state.discard = [];
-      say('弃牌堆已洗入抽牌堆', 'good');
+      say(L().reshuffle, 'good');
     }
     if (state.hand.length >= 10){ state.discard.push(state.draw.pop()); continue; }
     state.hand.push(state.draw.pop());
@@ -777,7 +961,6 @@ async function endTurn(){
   if (state.busy || state.over) return;
   cancelDrag(); closePop();
   state.busy = true; hoverIdx = -1; render();
-  // 1. discard non-retained cards
   const keep = [], gone = [];
   state.hand.forEach(c => (CARDS[c.key].retain ? keep : gone).push(c));
   gone.forEach((c, i) => {
@@ -790,38 +973,35 @@ async function endTurn(){
   render();
   await wait(500);
 
-  // 2. settlement by the rules engine
-  const lines = finance(), before = state.prevLive ?? community();
+  const lines = finance();
   const delta = sum(lines);
   state.money += delta;
   const popLines = [];
   hdbs.forEach(b => {
     const e = evalB(b);
-    if (e.actual < 50){ b.low++; if (b.low >= 2){ const d = Math.round(b.pop * .04); b.pop -= d; pushFloat(b, `−${d} 人`, '#ff9a8a'); popLines.push(b); } else pushFloat(b, `宜居 ${e.actual}`, '#ffb35e'); }
-    else { b.low = 0; if (e.actual >= 68 && b.pop < b.cap){ const d = Math.min(b.cap - b.pop, Math.round(b.cap * .03)); b.pop += d; pushFloat(b, `+${d} 人`, '#b9ffbf'); } }
+    if (e.actual < 50){ b.low++; if (b.low >= 2){ const d = Math.round(b.pop * .04); b.pop -= d; pushFloat(b, L().fOut(d), '#ff9a8a'); popLines.push(b); } else pushFloat(b, L().fLive(e.actual), '#ffb35e'); }
+    else { b.low = 0; if (e.actual >= 68 && b.pop < b.cap){ const d = Math.min(b.cap - b.pop, Math.round(b.cap * .03)); b.pop += d; pushFloat(b, L().fIn(d), '#b9ffbf'); } }
   });
   const live = community();
   showReport(lines, delta, live, popLines);
-  // goal check
   if (state.goal === 'active' && live >= 70){
     state.goal = 'done';
-    if (state.turn < GOAL_DEADLINE){ state.money += 150; state.ppMax += 1; say('阶段目标提前完成：S$150万，政治点上限 +1', 'good'); }
-    else say('阶段目标完成', 'good');
+    if (state.turn < GOAL_DEADLINE){ state.money += 150; state.ppMax += 1; say(L().goalEarly(money(150)), 'good'); }
+    else say(L().goalDone, 'good');
   } else if (state.goal === 'active' && state.turn >= GOAL_DEADLINE){
     state.goal = 'fail'; state.ppPenalty = 1; state.remedial = {need: 3, done: 0, deadline: state.turn + 2, base: hdbs.filter(b => b.up).length};
-    say('阶段目标未完成：下回合政治点 −1，补救任务已开启');
+    say(L().goalFail);
   }
   if (state.remedial && !state.remedial.closed){
     state.remedial.done = hdbs.filter(b => b.up).length - state.remedial.base;
-    if (state.remedial.done >= state.remedial.need){ state.remedial.closed = 'done'; state.money += 60; say('补救任务完成：S$60万', 'good'); }
-    else if (state.turn >= state.remedial.deadline){ state.remedial.closed = 'fail'; say('补救任务未完成'); }
+    if (state.remedial.done >= state.remedial.need){ state.remedial.closed = 'done'; state.money += 60; say(L().remDone(money(60)), 'good'); }
+    else if (state.turn >= state.remedial.deadline){ state.remedial.closed = 'fail'; say(L().remFail); }
   }
   state.marked = []; state.cool = false;
   render();
   await wait(1700);
   $('report').hidden = true;
 
-  // 3. next turn
   const wasEvent = eventOn();
   state.turn++;
   state.prevLive = live;
@@ -829,13 +1009,13 @@ async function endTurn(){
   let evEnded = false;
   if (wasEvent && !eventOn()){
     evEnded = true;
-    // unused event-only cards are destroyed when the event ends; running policies are NOT stopped
+    // unused event-only cards are exhausted when the event ends; running policies are NOT stopped
     const isEv = c => CARDS[c.key].event;
     state.hand.filter(isEv).forEach(c => { const el = els.get(c.uid); el.style.setProperty('--t', el.style.transform); el.classList.add('burn'); setTimeout(() => { el.remove(); els.delete(c.uid); }, 700); });
     const n = [...state.hand, ...state.draw, ...state.discard].filter(isEv).length;
     state.hand = state.hand.filter(c => !isEv(c)); state.draw = state.draw.filter(c => !isEv(c)); state.discard = state.discard.filter(c => !isEv(c));
-    say(n ? `极端高温结束：${n} 张未使用的应急卡已销毁` : '极端高温结束');
-    if (state.policies.subsidy) setTimeout(() => say('「能源电费补贴」仍在生效：效果大幅下降，支出照旧'), 600);
+    say(L().heatEnd(n));
+    if (state.policies.subsidy) setTimeout(() => say(L().subsidyStill), 600);
     await wait(700);
   }
   state.pp = state.ppMax - state.ppPenalty; state.ppPenalty = 0;
@@ -845,98 +1025,97 @@ async function endTurn(){
   banner(evEnded);
 }
 function banner(evEnded){
-  const b = $('banner');
-  $('bannerT').textContent = `第 ${state.turn} 回合`;
-  $('bannerS').textContent = dateStr(state.turn) + (eventOn() ? ' · 极端高温持续中' : evEnded ? ' · 高温已结束' : '');
+  const b = $('banner'), T = L();
+  $('bannerT').textContent = T.bannerT(state.turn);
+  $('bannerS').textContent = T.date(state.turn) + (eventOn() ? T.bannerHeat : evEnded ? T.bannerHeatEnd : '');
   b.classList.toggle('heat', eventOn());
   b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
 }
 function showReport(lines, delta, live, popLines){
-  const r = $('report');
+  const r = $('report'), T = L();
   const before = state.prevLive ?? live;
-  r.innerHTML = `<div class="src">规则引擎结算 · 确定值</div><h4>第 ${state.turn} 回合结算</h4>
-    <ul>${lines.map(([k, v]) => `<li><span>${k}</span><span class="num delta ${v<0?'neg':'pos'}">${v>0?'+':''}${v}</span></li>`).join('')}
-    <li class="tot"><span>财政合计（万新元）</span><span class="num delta ${delta<0?'neg':'pos'}">${delta>0?'+':''}${delta}</span></li></ul>
-    <div class="foot">社区实际宜居度 <b class="num">${before.toFixed(1)} → ${live.toFixed(1)}</b>${popLines.length ? `；${popLines.map(b => 'Blk ' + b.blk).join('、')} 有居民迁出` : ''}</div>`;
+  r.innerHTML = `<div class="src">${T.repSrc}</div><h4>${T.repTitle(state.turn)}</h4>
+    <ul>${lines.map(([k, v]) => `<li><span>${T.fin[k]}</span><span class="num delta ${v<0?'neg':'pos'}">${signed(v)}</span></li>`).join('')}
+    <li class="tot"><span>${T.repTotal}</span><span class="num delta ${delta<0?'neg':'pos'}">${signed(delta)}</span></li></ul>
+    <div class="foot">${T.repFoot(before.toFixed(1), live.toFixed(1), popLines.map(b => 'Blk ' + b.blk))}</div>`;
   r.hidden = false;
 }
 function showEnd(){
-  const live = community(), pop = hdbs.reduce((a,b)=>a+b.pop,0), ups = hdbs.filter(b=>b.up).length;
+  const T = L(), live = community(), pop = hdbs.reduce((a,b)=>a+b.pop,0), ups = hdbs.filter(b=>b.up).length;
   const o = $('overlay');
-  o.innerHTML = `<h2>试玩结束</h2><div class="sub">12 个回合已完成。以下为规则引擎的最终结算。</div>
-    <div class="panel" style="width:420px"><div class="kv"><span>社区实际宜居度</span><b class="num">${live.toFixed(1)}</b></div>
-    <div class="kv"><span>人口</span><b class="num">${pop.toLocaleString()}</b></div><div class="kv"><span>财政</span><b class="num">S$${state.money}万</b></div>
-    <div class="kv"><span>完成生态改造的组屋</span><b class="num">${ups} / ${hdbs.length}</b></div>
-    <div class="kv"><span>公共绿地</span><b class="num">${tiles.filter(t=>t.kind==='park').length}</b></div></div>
-    <button class="close" id="again" style="position:static;margin-top:20px">重新开始</button>`;
+  o.innerHTML = `<h2>${T.endTitle}</h2><div class="sub">${T.endSub}</div>
+    <div class="panel" style="width:420px"><div class="kv"><span>${T.endLive}</span><b class="num">${live.toFixed(1)}</b></div>
+    <div class="kv"><span>${T.endPop}</span><b class="num">${pop.toLocaleString()}</b></div><div class="kv"><span>${T.endFin}</span><b class="num">${money(state.money)}</b></div>
+    <div class="kv"><span>${T.endUps}</span><b class="num">${ups} / ${hdbs.length}</b></div>
+    <div class="kv"><span>${T.endParks}</span><b class="num">${tiles.filter(t=>t.kind==='park').length}</b></div></div>
+    <button class="close" id="again" type="button" style="position:static;margin-top:20px">${T.again}</button>`;
   o.hidden = false;
   $('again').onclick = () => { o.hidden = true; els.forEach(e => e.remove()); els.clear(); init(); render(); banner(); };
 }
 
 /* ================= HUD render ================= */
-function dateStr(t){ const m = 2 + t; return m > 12 ? `2028年${m-12}月` : `2027年${m}月`; }
 function render(){
-  const heat = heatLv(state.turn), live = community(), fl = finance(), fd = sum(fl);
+  const T = L(), heat = heatLv(state.turn), live = community(), fl = finance(), fd = sum(fl);
   const pop = hdbs.reduce((a,b)=>a+b.pop,0), cap = hdbs.reduce((a,b)=>a+b.cap,0);
   stage.classList.toggle('hot', !!heat);
-  $('rMoney').textContent = `S$${state.money}万`;
-  const md = $('rMoneyD'); md.textContent = `${fd>=0?'+':''}${fd}/回合`; md.className = 'sub num delta ' + (fd < 0 ? 'neg' : 'pos');
+  $('rMoney').textContent = money(state.money);
+  const md = $('rMoneyD'); md.textContent = signed(fd) + T.perTurn; md.className = 'sub num delta ' + (fd < 0 ? 'neg' : 'pos');
   $('rPop').textContent = `${pop.toLocaleString()} / ${cap.toLocaleString()}`;
   $('rLive').textContent = live.toFixed(1);
-  $('dateV').textContent = dateStr(state.turn);
-  $('turnV').textContent = `第 ${state.turn} / ${MAX_TURN} 回合 · 每回合 1 个月`;
+  $('dateV').textContent = T.date(state.turn);
+  $('turnV').textContent = T.turnOf(state.turn, MAX_TURN);
   $('temp').classList.toggle('on', !!heat);
   $('tempV').textContent = (31.2 + heat*1.7).toFixed(1) + '°C';
   $('timeline').innerHTML = Array.from({length: MAX_TURN}, (_, i) => {
     const t = i + 1; const c = ['tl', t < state.turn && 'past', t === state.turn && 'now', HEAT[t] && 'heat', t === GOAL_DEADLINE && 'goal'].filter(Boolean).join(' ');
-    return `<span class="${c}" title="第 ${t} 回合 · ${dateStr(t)}${HEAT[t] ? ' · 极端高温' : ''}${t === GOAL_DEADLINE ? ' · 目标截止' : ''}">${t === GOAL_DEADLINE ? '<i></i>' : ''}</span>`;
+    return `<span class="${c}" title="${T.tlTitle(t, T.date(t), HEAT[t], t === GOAL_DEADLINE)}">${t === GOAL_DEADLINE ? '<i></i>' : ''}</span>`;
   }).join('');
   // event panel
   const ep = $('eventPanel');
   if (eventOn()){
     const hi = hdbs.filter(b => evalB(b).stress >= 2).length;
-    const extra = -(fl.find(l => l[0] === '高温额外电费') || [0,0])[1];
-    const evCards = [...state.hand, ...state.draw, ...state.discard].filter(c => CARDS[c.key].event).map(c => '「' + CARDS[c.key].name + '」');
+    const extra = -(fl.find(l => l[0] === 'heatPower') || [0,0])[1];
+    const evCards = [...state.hand, ...state.draw, ...state.discard].filter(c => CARDS[c.key].event).map(c => cname(c.key));
     ep.className = 'panel event on';
-    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>事件 · 进行中</div><h3>极端高温 · 热指数 ${heat} 级</h3>
+    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.evOn}</div><h3>${T.evTitle(heat)}</h3>
       <div class="heatbar">${[1,2,3].map(i => `<i class="${i<=heat?'on':''}"></i>`).join('')}</div>
-      <p>逐栋计算热压力。组屋自身的生态改造和公共绿地覆盖都能降低压力。居民制冷开支上升会拉低实际宜居度。</p>
-      <div class="kv"><span>持续至</span><b>${dateStr(EVENT_END)} · 剩 ${EVENT_END - state.turn + 1} 回合</b></div>
-      <div class="kv"><span>热压力 ≥2 的组屋</span><b class="num">${hi} / ${hdbs.length} 栋</b></div>
-      <div class="kv"><span>公共设施额外电费</span><b class="num">−S$${extra}万/回合</b></div>
-      ${evCards.length ? `<div class="grant">应急卡 ${evCards.join('')} 未使用的话，会在事件结束时销毁。</div>` : ''}`;
+      <p>${T.evDesc}</p>
+      <div class="kv"><span>${T.evUntil}</span><b>${T.turnsLeft(T.date(EVENT_END), EVENT_END - state.turn + 1)}</b></div>
+      <div class="kv"><span>${T.evHot}</span><b class="num">${T.ofBlocks(hi, hdbs.length)}</b></div>
+      <div class="kv"><span>${T.evExtra}</span><b class="num">−${money(extra)}${T.perTurn}</b></div>
+      ${evCards.length ? `<div class="grant">${T.evGrant(evCards)}</div>` : ''}`;
   } else {
     ep.className = 'panel event';
-    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>事件</div><h3>暂无进行中的事件</h3>
-      <p>${state.turn > EVENT_END ? '极端高温已于 ' + dateStr(EVENT_END) + ' 结束。' : ''}${state.policies.subsidy ? '高温期间启动的能源补贴仍在支出，需要你手动结束。' : '利用这段时间推进绿化与改造。'}</p>`;
+    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.evOff}</div><h3>${T.evNone}</h3>
+      <p>${state.turn > EVENT_END ? T.evEnded(T.date(EVENT_END)) : ''}${state.policies.subsidy ? T.evSubsidyLeft : T.evCalm}</p>`;
   }
   // goal panel
   const gp = $('goalPanel');
   const pct = Math.min(100, live / 70 * 100), ups = hdbs.filter(b => b.up).length;
-  const gstate = state.goal === 'done' ? '已完成' : state.goal === 'fail' ? '未完成' : `截止 ${dateStr(GOAL_DEADLINE)} · 剩 ${GOAL_DEADLINE - state.turn + 1} 回合`;
+  const gstate = state.goal === 'done' ? T.gDone : state.goal === 'fail' ? T.gFail : T.gDue(T.date(GOAL_DEADLINE), GOAL_DEADLINE - state.turn + 1);
   gp.className = 'panel goal ' + (state.goal === 'done' ? 'done' : state.goal === 'fail' ? 'fail' : '');
-  gp.innerHTML = `<div class="eyebrow"><span class="dot"></span>阶段目标</div><h3>撑过热季</h3>
-    <p>第 ${GOAL_DEADLINE} 回合结束前，社区实际宜居度达到 70。</p>
+  const rm = state.remedial;
+  gp.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.goalEyebrow}</div><h3>${T.goalTitle}</h3>
+    <p>${T.goalDesc(GOAL_DEADLINE)}</p>
     <div class="bar goalbar"><i style="width:${pct}%"></i></div>
     <div class="kv"><span class="num">${live.toFixed(1)} / 70</span><b>${gstate}</b></div>
-    ${state.goal === 'active' ? `<div class="reward"><span>提前完成</span><span>S$150万，政治点上限 +1</span><span>未完成</span><span>下回合政治点 −1，并开启补救任务</span></div>` : ''}
-    ${state.remedial ? `<div class="grant" style="color:${state.remedial.closed==='done'?'#b9f0bb':'var(--heat-soft)'}">补救任务：第 ${state.remedial.deadline} 回合前再改造 ${state.remedial.need} 栋组屋（${Math.min(state.remedial.done,state.remedial.need)}/${state.remedial.need}）${state.remedial.closed==='done'?' · 已完成':state.remedial.closed==='fail'?' · 失败':''}</div>` : ''}
-    <div class="kv"><span>已生态改造</span><b class="num">${ups} / ${hdbs.length} 栋</b></div>`;
+    ${state.goal === 'active' ? `<div class="reward"><span>${T.rEarly}</span><span>${T.rEarlyV(money(150))}</span><span>${T.rMiss}</span><span>${T.rMissV}</span></div>` : ''}
+    ${rm ? `<div class="grant" style="color:${rm.closed==='done'?'#b9f0bb':'var(--heat-soft)'}">${T.rem(rm.deadline, Math.min(rm.done, rm.need), rm.need, rm.closed)}</div>` : ''}
+    <div class="kv"><span>${T.upgCount}</span><b class="num">${T.ofBlocks(ups, hdbs.length)}</b></div>`;
   // powers
   const pw = Object.keys(POLICY).filter(k => state.policies[k]);
-  $('powers').innerHTML = `<h4>生效中的政策</h4>` + (pw.length ? pw.map(k => {
+  $('powers').innerHTML = `<h4>${T.powersH}</h4>` + (pw.length ? pw.map(k => {
     const p = POLICY[k];
-    const warn = k === 'subsidy' && !heat ? `<small class="warn">高温已过，效果仅剩 +1 宜居</small>` : '';
-    return `<div class="power ${p.ev?'ev':''}"><span class="pi">持</span><div><b>${p.name}</b><small class="num">−S$${p.cost}万 / 回合</small>${warn}</div></div>`;
-  }).join('') : `<div class="empty">暂无持续政策。打出带「持续」的牌后会显示在这里。</div>`) +
-  (state.saver ? `<div class="power"><span class="pi">永</span><div><b>公共设施节能</b><small>高温额外电费减半</small></div></div>` : '');
+    const warn = k === 'subsidy' && !heat ? `<small class="warn">${T.subsidyWeak}</small>` : '';
+    return `<div class="power ${p.ev?'ev':''}"><span class="pi">${T.powerBadge}</span><div><b>${cname(p.card)}</b><small class="num">−${money(p.cost)}${T.perTurnSp}</small>${warn}</div></div>`;
+  }).join('') : `<div class="empty">${T.powersEmpty}</div>`) +
+  (state.saver ? `<div class="power"><span class="pi">${T.permBadge}</span><div><b>${T.saverName}</b><small>${T.saverDesc}</small></div></div>` : '');
   // piles & energy
   $('ppV').textContent = `${state.pp}/${state.ppMax}`;
   $('orb').classList.toggle('empty', state.pp <= 0);
   $('drawN').textContent = state.draw.length; $('discN').textContent = state.discard.length;
   $('exhN').textContent = state.exhaust.length; $('exhPile').hidden = !state.exhaust.length;
   $('endTurn').disabled = state.busy;
-  // remove stale card elements
   els.forEach((el, id) => { if (!state.hand.some(c => c.uid === id) && !el.classList.contains('flying') && !el.classList.contains('burn')) { el.remove(); els.delete(id); } });
   layoutHand();
   if ($('adv').classList.contains('open')) renderAdv();
@@ -944,35 +1123,28 @@ function render(){
 
 /* ================= AI advisor ================= */
 function renderAdv(){
-  const heat = heatLv(state.turn), live = community();
+  const T = L(), heat = heatLv(state.turn), live = community();
   const hot = hdbs.map(b => [b, evalB(b)]).filter(([, e]) => e.stress >= 2).sort((a, b) => b[1].stress - a[1].stress);
   const fd = sum(finance());
-  const eng = [`社区实际宜居度 <b>${live.toFixed(1)}</b>，目标 70。`, `本回合预计财政 <b>${fd>=0?'+':''}${fd}</b> 万新元。`];
-  if (heat) eng.push(`热压力 ≥2 的组屋 <b>${hot.length}</b> 栋${hot.length ? '：' + hot.slice(0, 4).map(([b]) => 'Blk ' + b.blk).join('、') + (hot.length > 4 ? ' 等' : '') : ''}。`);
+  const eng = [T.eLive(live.toFixed(1)), T.eFin(signed(fd))];
+  if (heat) eng.push(T.eHot(hot.length, hot.slice(0, 4).map(([b]) => 'Blk ' + b.blk), hot.length > 4));
   const inHand = k => state.hand.some(c => c.key === k);
-  if (inHand('subsidy') && !state.policies.subsidy){
-    const after = community({subsidy: true});
-    eng.push(`若启动能源补贴：宜居度 <b>${live.toFixed(1)} → ${after.toFixed(1)}</b>，每回合 −30 万。`);
-  }
-  if (inHand('cool') && !state.cool && heat){
-    eng.push(`若开放避暑点：本回合宜居度 <b>${live.toFixed(1)} → ${community({cool: true}).toFixed(1)}</b>。`);
-  }
-  if (state.policies.subsidy && !heat){
-    eng.push(`能源补贴当前只带来 <b>+1</b> 宜居，但仍每回合支出 <b>30</b> 万。`);
-  }
+  if (inHand('subsidy') && !state.policies.subsidy) eng.push(T.eSub(live.toFixed(1), community({subsidy: true}).toFixed(1), money(POLICY.subsidy.cost)));
+  if (inHand('cool') && !state.cool && heat) eng.push(T.eCool(live.toFixed(1), community({cool: true}).toFixed(1)));
+  if (state.policies.subsidy && !heat) eng.push(T.eSubWeak(money(POLICY.subsidy.cost)));
   const unc = hdbs.filter(b => !b.up && !evalB(b).cov);
   const ai = [];
-  if (heat && hot.length >= 4) ai.push('高温还会持续，热压力集中在没有绿地覆盖、也未改造的组屋。先把这几栋处理掉，比全区平均撒钱更划算。');
-  if (heat && inHand('subsidy') && !state.policies.subsidy) ai.push('能源补贴见效快，但它会一直扣钱，直到你打出结束牌。启动前想好在哪个回合关掉它。');
-  if (!heat && state.policies.subsidy) ai.push('高温已经过去，这笔补贴几乎没有作用了。可以考虑打出「结束能源补贴」。');
-  if (unc.length) ai.push(`有 ${unc.length} 栋组屋既不在绿地覆盖内、也没有改造：${unc.slice(0,3).map(b => 'Blk ' + b.blk).join('、')}。在它们旁边的空地种树，可以一次覆盖好几栋。`);
-  if (state.money < 200) ai.push('财政余额偏低，维护费和电费会继续扣。下一步改造前，先确认还剩多少余量。');
-  if (!ai.length) ai.push('局势平稳。可以考虑把钱投在长期改造上，为下一次热季做准备。');
-  $('adv').innerHTML = `<h3><span class="eye" style="width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c9f3ff,#3aa0bd 60%,#16505f)"></span>AI 政策顾问<button class="x" id="advX" type="button">关闭</button></h3>
-    <div class="advsec eng"><div class="tag"><span>引擎计算 · 确定值</span><span>来自游戏规则</span></div><ul>${eng.map(s => `<li>${s}</li>`).join('')}</ul></div>
-    <div class="advsec ai"><div class="tag"><span>AI 判断 · 建议</span><span>可能不准确</span></div><ul>${ai.map(s => `<li>${s}</li>`).join('')}</ul>
-    <button class="hl" id="advHl" type="button">在手牌中标出相关的牌</button></div>
-    <p class="note" style="margin-top:12px">顾问只读取当前局面并给出解释，不会替你出牌，也不会修改任何数值。</p>`;
+  if (heat && hot.length >= 4) ai.push(T.aHot);
+  if (heat && inHand('subsidy') && !state.policies.subsidy) ai.push(T.aSub);
+  if (!heat && state.policies.subsidy) ai.push(T.aSubEnd);
+  if (unc.length) ai.push(T.aUnc(unc.length, unc.slice(0,3).map(b => 'Blk ' + b.blk)));
+  if (state.money < 200) ai.push(T.aLow);
+  if (!ai.length) ai.push(T.aCalm);
+  $('adv').innerHTML = `<h3><span class="eye"></span>${T.advisor}<button class="x" id="advX" type="button">${T.close}</button></h3>
+    <div class="advsec eng"><div class="tag"><span>${T.advEng}</span><span>${T.advEngR}</span></div><ul>${eng.map(s => `<li>${s}</li>`).join('')}</ul></div>
+    <div class="advsec ai"><div class="tag"><span>${T.advAi}</span><span>${T.advAiR}</span></div><ul>${ai.map(s => `<li>${s}</li>`).join('')}</ul>
+    <button class="hl" id="advHl" type="button">${T.advHl}</button></div>
+    <p class="note" style="margin-top:12px">${T.advNote}</p>`;
   $('advX').onclick = () => $('adv').classList.remove('open');
   $('advHl').onclick = () => {
     const keys = heat ? ['subsidy','cool','batch','plant'] : state.policies.subsidy ? ['stopSubsidy','plant','batch'] : ['plant','batch','fund'];
@@ -983,40 +1155,36 @@ $('advBtn').onclick = () => { const a = $('adv'); a.classList.toggle('open'); if
 
 /* ================= tile tooltip & build popover ================= */
 function showTip(t, x, y){
-  const tip = $('tip');
+  const tip = $('tip'), T = L();
   if (!t || drag || !$('pop').hidden){ tip.hidden = true; return; }
+  const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
   let h = '';
   if (t.kind === 'hdb'){
     const e = evalB(t);
-    h = `<h5>Blk ${t.blk} 组屋</h5>
-      <div class="row"><span>居民</span><b class="num">${t.pop} / ${t.cap}</b></div>
-      <div class="row"><span>生态改造</span><b>${e.up ? '已完成' : '未改造'}</b></div>
-      <div class="row"><span>公共绿地覆盖</span><b>${e.cov ? '是' : '否'}</b></div>
-      <div class="row"><span>基础宜居度</span><b class="num">${e.base}</b></div>
-      ${heatLv(state.turn) ? `<div class="row"><span>热压力</span><b class="num" style="color:var(--heat-soft)">${e.stress}</b></div><div class="row"><span>高温惩罚</span><b class="num">−${e.penalty}${e.subsidy && e.stress>=2 ? '（补贴减半）' : ''}</b></div>` : ''}
-      <div class="row"><span>实际宜居度</span><b class="num">${e.actual}</b></div>
-      ${e.up ? '' : `<div class="hint">点击：生态改造 S$${BASE_UPG_COST}万</div>`}`;
-  } else if (t.kind === 'empty') h = `<h5>空地</h5><div class="row"><span>可建造公共绿地</span><b class="num">S$${PARK_COST}万</b></div><div class="hint">点击建造</div>`;
-  else if (t.kind === 'park') h = `<h5>公共绿地</h5><div class="row"><span>覆盖半径</span><b class="num">${radius()} 格</b></div><div class="row"><span>维护费</span><b class="num">S$4万/回合</b></div>`;
-  else if (t.kind === 'hawker') h = `<h5>熟食中心</h5><div class="row"><span>性质</span><b>公共民生设施</b></div><div class="row"><span>遮荫改造</span><b>${t.shaded ? '已完成' : '未进行'}</b></div>`;
-  else if (t.kind === 'cc') h = `<h5>社区俱乐部</h5><div class="row"><span>性质</span><b>公共设施</b></div>`;
-  else if (t.kind === 'carpark') h = `<h5>多层停车场</h5><div class="row"><span>可收回改作绿地</span><b class="num">S$${CARPARK_COST}万</b></div><div class="hint">点击查看</div>`;
+    h = `<h5>${T.tBlk(t.blk)}</h5>` + row(T.tRes, `${t.pop} / ${t.cap}`, 'num') + row(T.tUpg, e.up ? T.tDone : T.tNot) + row(T.tCov, e.cov ? T.yes : T.no) + row(T.tBase, e.base, 'num') +
+      (heatLv(state.turn) ? `<div class="row"><span>${T.tStress}</span><b class="num" style="color:var(--heat-soft)">${e.stress}</b></div>` + row(T.tPen, `−${e.penalty}${e.subsidy && e.stress>=2 ? T.tHalved : ''}`, 'num') : '') +
+      row(T.tActual, e.actual, 'num') + (e.up ? '' : `<div class="hint">${T.tClickUpg(money(BASE_UPG_COST))}</div>`);
+  } else if (t.kind === 'empty') h = `<h5>${T.tEmpty}</h5>` + row(T.tParkCost, money(PARK_COST), 'num') + `<div class="hint">${T.tClickBuild}</div>`;
+  else if (t.kind === 'park') h = `<h5>${T.tPark}</h5>` + row(T.tRadius, T.tiles(radius()), 'num') + row(T.tUpkeep, money(4) + T.perTurn, 'num');
+  else if (t.kind === 'hawker') h = `<h5>${T.hawker}</h5>` + row(T.tKind, T.tAmenity) + row(T.tShade, t.shaded ? T.tDone : T.tNotYet);
+  else if (t.kind === 'cc') h = `<h5>${T.cc}</h5>` + row(T.tKind, T.tFacility);
+  else if (t.kind === 'carpark') h = `<h5>${T.tCarpark}</h5>` + row(T.tConvert, money(CARPARK_COST), 'num') + `<div class="hint">${T.tClickView}</div>`;
   else { tip.hidden = true; return; }
   tip.innerHTML = h; tip.hidden = false;
-  tip.style.left = Math.min(x + 18, W - 250) + 'px'; tip.style.top = Math.min(y + 12, 520) + 'px';
+  tip.style.left = Math.min(x + 18, W - 260) + 'px'; tip.style.top = Math.min(y + 12, 520) + 'px';
 }
 let popTile = null;
 function openPop(t){
-  const p = $('pop'); let title = '', body = '', cost = 0, act = null;
-  if (t.kind === 'hdb' && !t.up){ title = `Blk ${t.blk} 生态改造`; body = '屋顶绿化与立面种植箱。只提升本栋的基础宜居度，降低高温热压力。不增加住房容量。'; cost = BASE_UPG_COST; act = () => { t.up = true; pushFloat(t, '生态改造', '#b9ffbf'); }; }
-  else if (t.kind === 'empty'){ title = '建造公共绿地'; body = `覆盖周边 ${radius()} 格内的组屋：基础宜居度上升，热压力降低。每回合维护 S$4万。`; cost = PARK_COST; act = () => { t.kind = 'park'; pushFloat(t, '+ 绿地', '#b9ffbf'); }; }
-  else if (t.kind === 'carpark'){ title = '停车场改作绿地'; body = '收回现有用地并重新规划为公共绿地。成本比空地更高。'; cost = CARPARK_COST; act = () => { t.kind = 'park'; pushFloat(t, '+ 绿地', '#b9ffbf'); }; }
+  const p = $('pop'), T = L(); let title = '', body = '', cost = 0, act = null;
+  if (t.kind === 'hdb' && !t.up){ title = T.pUpgT(t.blk); body = T.pUpgB; cost = BASE_UPG_COST; act = () => { t.up = true; pushFloat(t, L().fUpg, '#b9ffbf'); }; }
+  else if (t.kind === 'empty'){ title = T.pParkT; body = T.pParkB(radius(), money(4)); cost = PARK_COST; act = () => { t.kind = 'park'; pushFloat(t, L().fPark, '#b9ffbf'); }; }
+  else if (t.kind === 'carpark'){ title = T.pCarT; body = T.pCarB; cost = CARPARK_COST; act = () => { t.kind = 'park'; pushFloat(t, L().fPark, '#b9ffbf'); }; }
   else return;
   popTile = t;
   const [x, y] = iso(t.gx, t.gy);
-  p.innerHTML = `<h5>${title}</h5><p>${body}</p><div class="acts"><button type="button" id="popGo" ${state.money < cost ? 'disabled' : ''}>建造 · S$${cost}万</button><button type="button" class="ghost" id="popX">取消</button></div>`;
-  p.style.left = Math.max(310, Math.min(x - 115, W - 420)) + 'px';
-  p.style.top = Math.max(64, y - 150 - (t.h || 0) * .3) + 'px';
+  p.innerHTML = `<h5>${title}</h5><p>${body}</p><div class="acts"><button type="button" id="popGo" ${state.money < cost ? 'disabled' : ''}>${T.build(money(cost))}</button><button type="button" class="ghost" id="popX">${T.cancel}</button></div>`;
+  p.style.left = Math.max(310, Math.min(x - 120, W - 430)) + 'px';
+  p.style.top = Math.max(64, y - 160 - (t.h || 0) * .3) + 'px';
   p.hidden = false; $('tip').hidden = true;
   $('popGo').onclick = () => { state.money -= cost; act(); closePop(); render(); };
   $('popX').onclick = closePop;
@@ -1052,7 +1220,7 @@ stage.addEventListener('pointerdown', e => {
 stage.addEventListener('pointerup', e => {
   pointer = toStage(e);
   if (drag && drag.moved){ resolveDrag(); return; }
-  if (down && !drag){ startDrag(down.card, true); down = null; return; } // simple click picks the card up
+  if (down && !drag){ startDrag(down.card, true); down = null; return; } // a simple click picks the card up
   down = null;
   if (!drag && e.target === canvas){
     const t = pick(...pointer);
@@ -1083,15 +1251,15 @@ function finishDrag(){ drag = null; targetHover = null; $('playline').style.disp
 function cancelDrag(){ if (!drag) return; finishDrag(); layoutHand(); }
 
 function pileView(name, list, sub){
-  const o = $('overlay');
-  const cards = name === '抽牌堆' ? [...list].sort((a,b) => CARDS[a.key].name.localeCompare(CARDS[b.key].name, 'zh')) : [...list].reverse();
-  o.innerHTML = `<button class="close" id="ovX" type="button">关闭</button><h2>${name}</h2><div class="sub">${sub}</div>
-    <div class="grid">${cards.length ? cards.map(c => `<div class="card t-${CARDS[c.key].type}">${cardHTML(c)}</div>`).join('') : '<p class="empty">这里还没有牌。</p>'}</div>`;
+  const o = $('overlay'), T = L();
+  const cards = list === state.draw ? [...list].sort((a,b) => cname(a.key).localeCompare(cname(b.key), lang)) : [...list].reverse();
+  o.innerHTML = `<button class="close" id="ovX" type="button">${T.close}</button><h2>${name}</h2><div class="sub">${sub}</div>
+    <div class="grid">${cards.length ? cards.map(c => `<div class="card t-${CARDS[c.key].type}">${cardHTML(c)}</div>`).join('') : `<p class="empty">${T.vEmpty}</p>`}</div>`;
   o.hidden = false; $('ovX').onclick = () => o.hidden = true;
 }
-$('drawPile').onclick = () => pileView('抽牌堆', state.draw, `共 ${state.draw.length} 张，按名称排列（不显示抽取顺序）`);
-$('discPile').onclick = () => pileView('弃牌堆', state.discard, `共 ${state.discard.length} 张。抽牌堆用完时会洗回抽牌堆。`);
-$('exhPile').onclick = () => pileView('已销毁', state.exhaust, '这些牌已移出本局牌组。');
+$('drawPile').onclick = () => pileView(L().vDraw, state.draw, L().vDrawS(state.draw.length));
+$('discPile').onclick = () => pileView(L().vDisc, state.discard, L().vDiscS(state.discard.length));
+$('exhPile').onclick = () => pileView(L().vExh, state.exhaust, L().vExhS);
 $('endTurn').onclick = endTurn;
 ['drawPile','discPile','exhPile','endTurn','advBtn'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
 ['adv','pop','overlay','report'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
@@ -1108,7 +1276,7 @@ function fit(){
 }
 addEventListener('resize', fit);
 function loop(ts){ now = ts; drawCity(); requestAnimationFrame(loop); }
-init(); fit(); render();
+init(); applyStatic(); fit(); render();
 requestAnimationFrame(loop);
 setTimeout(() => banner(), 300);
 })();

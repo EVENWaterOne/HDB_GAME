@@ -6,6 +6,8 @@
 
 **https://hdb-game.vercel.app**
 
+右上角可以切换中文 / English（会记住你的选择；网址末尾加 `#en` 或 `#zh` 可直接指定语言）。
+
 也可以下载 [`prototype/index.html`](prototype/index.html) 后直接用浏览器打开，不需要安装任何东西。
 
 推送到 `main` 后 Vercel 会自动重新部署；根目录的 `vercel.json` 把网站首页指向 `prototype/index.html`。
