@@ -3,12 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-</head>
-<body>
+<meta name="description" content="HDB Eco Community：以新加坡组屋社区为场景的回合制生态改造与政策卡牌游戏 UI 原型。">
 <title>HDB 生态社区</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* Layout: fixed 1280×760 game stage scaled to fit. Top = date & time bar, left = event + goal rail,
    centre = isometric HDB neighbourhood, right = active policies + AI advisor, bottom = Slay-the-Spire style fanned hand. */
@@ -216,6 +215,8 @@ button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-o
 @media (max-width:640px) and (orientation:portrait){#rotate{display:block;position:fixed;left:16px;right:16px;bottom:16px;padding:10px 12px;border-radius:10px;background:#152d2f;border:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center;z-index:200}}
 </style>
 
+</head>
+<body>
 <div id="stage">
   <canvas id="city" width="1280" height="760"></canvas>
 
