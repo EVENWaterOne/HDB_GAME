@@ -1,6 +1,36 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/prototype/index.html" },
-    { "source": "/vendor/:path*", "destination": "/prototype/vendor/:path*" }
+    {
+      "source": "/",
+      "destination": "/prototype/index.html"
+    },
+    {
+      "source": "/vendor/:path*",
+      "destination": "/prototype/vendor/:path*"
+    },
+    {
+      "source": "/game.css",
+      "destination": "/prototype/game.css"
+    },
+    {
+      "source": "/data.js",
+      "destination": "/prototype/data.js"
+    },
+    {
+      "source": "/engine.js",
+      "destination": "/prototype/engine.js"
+    },
+    {
+      "source": "/view.js",
+      "destination": "/prototype/view.js"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/prototype/app.js"
+    },
+    {
+      "source": "/HDB_Game_v1_Source.zip",
+      "destination": "/prototype/HDB_Game_v1_Source.zip"
+    }
   ]
 }

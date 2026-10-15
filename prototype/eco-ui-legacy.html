@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="HDB Eco Community：以新加坡组屋社区为场景的回合制生态改造与政策卡牌游戏 UI 原型。A turn-based HDB eco-retrofit and policy card game UI prototype.">
+<title>HDB 生态社区</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* Layout: fixed 1280×760 game stage scaled to fit. Top = date & time bar, left = event + goal rail,
+   centre = rotatable low-poly 3D HDB neighbourhood (Three.js), right = active policies + AI advisor, bottom = Slay-the-Spire style fanned hand. */
+:root{
+  --night:#0c1a1d; --night-2:#12262a; --panel:#152d2f; --panel-2:#1b3836; --line:#2e4d4a;
+  --ink:#f2eee3; --muted:#98ada7; --dim:#61756f;
+  --heat:#ff7a33; --heat-soft:#ffb35e; --eco:#6cc46f; --gold:#e6b84a;
+  --policy:#3f86a8; --power:#7b68c0; --event:#d0782c; --stop:#8b5f5a; --bad:#ef5a4c;
+  --f-display:"Noto Serif SC","Songti SC","SimSun",Georgia,serif;
+  --f-body:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--f-body);overflow:hidden;margin:0;-webkit-font-smoothing:antialiased}
+#stage{position:absolute;left:0;top:0;width:1280px;height:760px;transform-origin:0 0;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;
+  background:radial-gradient(120% 90% at 55% 40%, #1a3a3b 0%, #10272a 55%, #0a1618 100%)}
+#stage.hot{background:radial-gradient(120% 90% at 55% 40%, #3a3127 0%, #24241f 50%, #12191a 100%)}
+#city,#fx{position:absolute;inset:0;width:1280px;height:760px}
+#fx{pointer-events:none}
+#city{cursor:grab}
+#camCtl{position:absolute;right:30px;top:500px;z-index:30;width:150px;display:flex;flex-direction:column;align-items:center;gap:6px}
+#camCtl .hint{font-size:10px;color:var(--muted);letter-spacing:.04em;white-space:nowrap;text-shadow:0 1px 2px #000}
+#camCtl .btns{display:flex;gap:8px}
+#camCtl button{width:34px;height:34px;border-radius:50%;border:1px solid #ffffff33;background:#0b1719cc;cursor:pointer;display:grid;place-items:center;color:var(--ink);padding:0}
+#camCtl button:hover{border-color:var(--gold);color:var(--gold)}
+#camCtl svg{width:16px;height:16px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+button:focus-visible,.pile:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* ---------- top bar: date & time ---------- */
+#top{position:absolute;left:0;right:0;top:0;height:56px;display:flex;align-items:center;gap:16px;padding:0 16px;
+  background:linear-gradient(#081315,#0c1b1ecc);border-bottom:1px solid var(--line);z-index:20}
+.place{display:flex;flex-direction:column;line-height:1.15;min-width:150px}
+.place b{font-family:var(--f-display);font-size:16px;letter-spacing:.04em;white-space:nowrap}
+.place span{font-size:11px;color:var(--muted);letter-spacing:.08em;white-space:nowrap}
+.res{display:flex;gap:12px}
+.chip{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;background:#ffffff08;border:1px solid #ffffff10}
+.chip .ico{width:18px;height:18px;flex:none}
+.chip .lab{font-size:10px;color:var(--muted);letter-spacing:.08em;display:block;white-space:nowrap}
+.chip .val{font-size:14px;font-weight:700}
+.chip .sub{font-size:11px;color:var(--muted);margin-left:4px}
+.delta.neg{color:var(--bad)} .delta.pos{color:var(--eco)}
+.clock{margin-left:auto;display:flex;align-items:center;gap:14px}
+.date{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.date b{font-family:var(--f-display);font-size:19px;white-space:nowrap}
+.date span{font-size:11px;color:var(--muted);white-space:nowrap}
+.timeline{display:flex;gap:3px;align-items:flex-end;height:30px}
+.tl{width:14px;height:8px;border-radius:2px;background:#ffffff1a;position:relative}
+.tl.past{background:#ffffff40}
+.tl.now{height:14px;background:var(--ink);box-shadow:0 0 8px #fff8}
+.tl.heat::after{content:"";position:absolute;left:0;right:0;bottom:-5px;height:3px;border-radius:2px;background:var(--heat)}
+.tl.goal::before{content:"";position:absolute;left:4px;top:-14px;width:2px;height:12px;background:var(--gold)}
+.tl.goal i{position:absolute;left:6px;top:-14px;width:8px;height:6px;background:var(--gold);clip-path:polygon(0 0,100% 50%,0 100%)}
+.temp{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;border:1px solid #ffffff14}
+.temp.on{border-color:#ff7a3366;background:#ff7a331a;color:var(--heat-soft)}
+.temp b{font-size:15px}
+#lang{display:flex;border:1px solid #ffffff2a;border-radius:16px;overflow:hidden;flex:none}
+#lang button{border:0;background:transparent;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--muted);letter-spacing:.04em}
+#lang button[aria-pressed="true"]{background:var(--ink);color:#0c1a1d;font-weight:700}
+
+/* ---------- side rails ---------- */
+.rail{position:absolute;top:72px;display:flex;flex-direction:column;gap:12px;z-index:10}
+#left{left:16px;width:272px}
+#right{right:16px;width:178px;align-items:stretch}
+.panel{background:linear-gradient(180deg,#173232f2,#122729f2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px #0006}
+.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--muted);display:flex;align-items:center;gap:6px;text-transform:uppercase}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.panel h3{margin:6px 0 4px;font-family:var(--f-display);font-size:17px;text-wrap:balance}
+.panel p{margin:0;font-size:12px;line-height:1.55;color:#cfd8d3}
+.event.on{border-color:#ff7a3399;background:linear-gradient(180deg,#3a2a1ff2,#21201cf2)}
+.event.on .eyebrow .dot{background:var(--heat);box-shadow:0 0 8px var(--heat);animation:pulse 1.4s infinite}
+.heatbar{display:flex;gap:4px;margin:8px 0}
+.heatbar i{flex:1;height:6px;border-radius:3px;background:#ffffff14}
+.heatbar i.on{background:linear-gradient(90deg,var(--heat-soft),var(--heat))}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-top:6px;color:var(--muted)}
+.kv b{color:var(--ink);font-weight:500;text-align:right}
+.grant{margin-top:10px;padding-top:8px;border-top:1px dashed #ffffff22;font-size:11px;color:var(--heat-soft);line-height:1.5}
+.goal .eyebrow .dot{background:var(--gold)}
+.bar{height:8px;border-radius:4px;background:#ffffff14;margin:8px 0 2px;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#4e9e6a,var(--eco));transition:width .6s}
+.bar.goalbar::after{content:"";position:absolute;right:0;top:-2px;bottom:-2px;width:2px;background:var(--gold)}
+.reward{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;margin-top:8px;font-size:11px;line-height:1.45}
+.reward span:nth-child(odd){color:var(--muted);white-space:nowrap}
+.goal.done{border-color:#6cc46f88} .goal.fail{border-color:#ef5a4c88}
+.powers h4{margin:0 0 8px;font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:500;text-transform:uppercase}
+.power{display:flex;gap:8px;align-items:flex-start;padding:7px 8px;border-radius:8px;background:#7b68c022;border:1px solid #7b68c055;margin-top:6px}
+.power .pi{min-width:22px;height:22px;padding:0 3px;border-radius:11px;flex:none;display:grid;place-items:center;background:var(--power);font-size:10px;font-weight:700}
+.power.ev .pi{background:var(--event)}
+.power b{display:block;font-size:12px}
+.power small{display:block;font-size:10.5px;color:var(--muted);line-height:1.4}
+.power small.warn{color:var(--heat-soft)}
+.empty{font-size:11px;color:var(--dim);line-height:1.5}
+#advBtn{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid #6fb7c955;background:linear-gradient(180deg,#1d4148,#16323a);cursor:pointer;text-align:left}
+#advBtn:hover{border-color:#8fd2e2}
+.eye{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c9f3ff,#3aa0bd 60%,#16505f);box-shadow:0 0 12px #3aa0bd88;flex:none}
+#advBtn b{display:block;font-size:13px} #advBtn small{font-size:10.5px;color:var(--muted);line-height:1.35;display:block}
+.note{font-size:10px;color:var(--dim);line-height:1.5;margin:0}
+
+/* ---------- bottom controls ---------- */
+#orb{position:absolute;left:46px;top:560px;width:96px;height:96px;border-radius:50%;z-index:30;display:grid;place-items:center;text-align:center;
+  background:radial-gradient(circle at 40% 35%,#ffe9a8 0%,#e6b84a 32%,#8a5a16 72%,#3b2408 100%);box-shadow:0 0 0 3px #2b1c08,0 0 24px #e6b84a66,inset 0 -8px 16px #0006}
+#orb .n{font-family:var(--f-num);font-size:28px;font-weight:700;color:#2a1904;text-shadow:0 1px 0 #fff6;line-height:1}
+#orb .l{font-size:10px;color:#3b2408;font-weight:700;letter-spacing:.1em;margin-top:2px;text-transform:uppercase}
+html:lang(en) #orb .l{font-size:8.5px;letter-spacing:.06em}
+#orb.empty{filter:saturate(.25) brightness(.7)}
+#orb.shake{animation:shake .35s}
+.pile{position:absolute;z-index:30;width:66px;height:78px;cursor:pointer;display:grid;place-items:center;border:0;background:none;padding:0}
+.pile .stack{position:absolute;inset:6px 8px 14px;border-radius:7px;background:linear-gradient(160deg,#2b5c63,#173a40);border:2px solid #7fb3b8;box-shadow:4px 4px 0 #0f2b30,8px 8px 0 #0b2024}
+.pile.disc .stack{background:linear-gradient(160deg,#5a4a40,#352a24);border-color:#b39a86;box-shadow:-4px 4px 0 #2a201b,-8px 8px 0 #1f1814}
+.pile.exh .stack{background:linear-gradient(160deg,#4a2f3a,#2a1a22);border-color:#a07689;box-shadow:none;inset:14px 14px 18px}
+.pile .cnt{position:absolute;bottom:0;right:0;min-width:24px;height:24px;border-radius:12px;background:#0c1a1d;border:2px solid currentColor;font-family:var(--f-num);font-weight:700;font-size:12px;display:grid;place-items:center;color:var(--ink)}
+.pile .pl{position:absolute;bottom:-14px;left:-10px;right:-10px;text-align:center;font-size:10px;color:var(--muted);letter-spacing:.08em;white-space:nowrap}
+#drawPile{left:22px;top:670px} #discPile{right:22px;top:670px} #exhPile{right:96px;top:688px;width:50px;height:60px}
+#endTurn{position:absolute;right:30px;top:592px;z-index:30;width:150px;height:56px;border-radius:28px;border:2px solid #f1d58a;cursor:pointer;
+  background:linear-gradient(180deg,#e9c766,#b17d22);color:#2a1904;font-family:var(--f-display);font-weight:900;font-size:18px;letter-spacing:.12em;box-shadow:0 6px 0 #6b4510,0 10px 24px #0008}
+html:lang(en) #endTurn{letter-spacing:.04em}
+#endTurn:hover{filter:brightness(1.08)} #endTurn:active{transform:translateY(3px);box-shadow:0 3px 0 #6b4510}
+#endTurn:disabled{filter:grayscale(.8) brightness(.6);cursor:default}
+#endTurn small{display:block;font-family:var(--f-body);font-size:10px;letter-spacing:.06em;font-weight:500;opacity:.75;margin-top:-2px}
+
+/* ---------- cards ---------- */
+#hand{position:absolute;inset:0;pointer-events:none;z-index:40}
+.card{position:absolute;left:0;top:0;width:160px;height:224px;margin:-112px 0 0 -80px;transform-origin:50% 50%;
+  transition:transform .2s cubic-bezier(.2,.8,.3,1),opacity .3s,filter .2s;will-change:transform;pointer-events:none}
+.card.dragging{transition:none}
+.card.flying{transition:transform .38s cubic-bezier(.5,0,.7,1),opacity .38s}
+.cf{position:absolute;inset:0;border-radius:12px;padding:8px;display:flex;flex-direction:column;align-items:center;
+  background:linear-gradient(170deg,var(--cc) 0%,color-mix(in srgb,var(--cc) 55%,#000) 100%);border:2px solid color-mix(in srgb,var(--cc) 60%,#fff);
+  box-shadow:0 6px 14px #0009, inset 0 0 0 3px #0003}
+.card.t-policy{--cc:var(--policy)} .card.t-power{--cc:var(--power)} .card.t-event{--cc:var(--event)} .card.t-stop{--cc:var(--stop)}
+.card.playable .cf{box-shadow:0 0 0 2px #b9ffbf66,0 0 18px 4px #6cc46f88,0 6px 14px #0009}
+.card.glow .cf{box-shadow:0 0 0 2px #c9f3ff,0 0 22px 6px #3aa0bdcc,0 6px 14px #0009}
+.cost{position:absolute;left:-12px;top:-12px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;z-index:2;
+  background:radial-gradient(circle at 40% 35%,#ffe9a8,#e6b84a 40%,#7b4f12);border:2px solid #2b1c08;font-family:var(--f-num);font-weight:700;font-size:19px;color:#2a1904}
+.card.nope .cost{color:#b3241a}
+.cname{width:calc(100% + 10px);margin-top:2px;padding:4px 6px 5px;text-align:center;font-family:var(--f-display);font-weight:900;font-size:14.5px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:linear-gradient(#00000055,#00000077);clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);text-shadow:0 1px 2px #000}
+html:lang(en) .cname{font-size:12px;letter-spacing:0;padding:5px 10px 6px 20px}
+.art{width:132px;height:74px;margin-top:5px;border-radius:6px;overflow:hidden;border:2px solid #0006;box-shadow:inset 0 0 0 1px #fff3;flex:none}
+.art svg{display:block;width:100%;height:100%}
+.ctype{margin-top:-9px;padding:1px 9px;border-radius:9px;font-size:10px;letter-spacing:.08em;background:#0b1719;border:1px solid #ffffff33;z-index:1;white-space:nowrap}
+html:lang(en) .ctype{letter-spacing:.02em;font-size:9.5px}
+.ctext{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11.5px;line-height:1.45;padding:2px 4px;color:#f6f1e6;text-shadow:0 1px 1px #0008}
+html:lang(en) .ctext{font-size:10.5px;line-height:1.32;padding:2px 2px}
+.ctext k,.kwd{color:var(--gold);font-weight:700}
+.ctags{display:flex;gap:4px;justify-content:center;min-height:16px}
+.ctags span{font-size:9.5px;padding:0 6px;border-radius:6px;background:#0005;color:var(--gold);letter-spacing:.06em;line-height:16px}
+.ribbon{position:absolute;right:-6px;top:40px;padding:2px 8px 2px 10px;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#2a1300;white-space:nowrap;
+  background:linear-gradient(90deg,#ffc074,#ff8d3a);clip-path:polygon(8px 0,100% 0,100% 100%,8px 100%,0 50%);box-shadow:0 2px 4px #0006;z-index:2}
+.card.burn{animation:burn .7s forwards}
+
+/* keyword tooltips (beside hovered card, as in StS) */
+#kwtip{position:absolute;z-index:60;width:210px;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#kwtip div{background:#0b1719f2;border:1px solid #e6b84a66;border-radius:8px;padding:7px 9px;font-size:11.5px;line-height:1.5;color:#dfe6e2}
+#kwtip b{display:block;color:var(--gold);font-size:12px;margin-bottom:1px}
+
+#arrow{position:absolute;inset:0;z-index:45;pointer-events:none;overflow:visible}
+#playline{position:absolute;left:300px;right:300px;top:500px;height:0;border-top:2px dashed #ffffff30;z-index:39;display:none}
+#playline span{position:absolute;left:50%;transform:translate(-50%,-130%);font-size:11px;color:#ffffffaa;letter-spacing:.1em;white-space:nowrap}
+
+/* ---------- tooltips, popovers, overlays ---------- */
+#tip{position:absolute;z-index:70;min-width:200px;max-width:240px;pointer-events:none;background:#0b1719f2;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.5;box-shadow:0 8px 20px #0008}
+#tip h5{margin:0 0 4px;font-size:13px;font-family:var(--f-display)}
+#tip .row{display:flex;justify-content:space-between;gap:10px;color:var(--muted)}
+#tip .row b{color:var(--ink);font-weight:500;text-align:right}
+#tip .hint{margin-top:6px;font-size:11px;color:var(--gold)}
+#pop{position:absolute;z-index:75;width:240px;background:#0b1719f7;border:1px solid #e6b84a77;border-radius:12px;padding:12px;box-shadow:0 10px 30px #000a}
+#pop h5{margin:0 0 2px;font-family:var(--f-display);font-size:15px}
+#pop p{margin:4px 0 10px;font-size:11.5px;line-height:1.5;color:#cfd8d3}
+#pop .acts{display:flex;gap:8px}
+#pop button{flex:1;padding:8px;border-radius:8px;border:1px solid #6cc46f88;background:#244c33;cursor:pointer;font-size:12.5px}
+#pop button.ghost{border-color:#ffffff22;background:transparent;flex:none}
+#pop button:disabled{opacity:.45;cursor:default}
+#toast{position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:560px}
+#toast div{background:#0b1719f2;border:1px solid var(--line);border-radius:20px;padding:7px 14px;font-size:12.5px;animation:tin .25s ease-out;text-align:center}
+#toast div.warn{border-color:#ff7a3399;color:var(--heat-soft)} #toast div.good{border-color:#6cc46f99;color:#b9f0bb}
+#report{position:absolute;left:50%;top:250px;transform:translate(-50%,-50%);z-index:85;width:350px;background:#0b1719f7;border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 20px 50px #000c}
+#report h4{margin:0;font-family:var(--f-display);font-size:16px}
+#report .src{font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+#report ul{list-style:none;margin:10px 0 6px;padding:0;font-size:12.5px}
+#report li{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #ffffff14}
+#report li.tot{border:0;font-weight:700;padding-top:6px}
+#report .foot{font-size:11px;color:var(--muted);line-height:1.5;margin-top:6px}
+#banner{position:absolute;left:0;right:0;top:300px;height:96px;z-index:90;pointer-events:none;display:grid;place-items:center;
+  background:linear-gradient(90deg,transparent,#081315e6 20%,#081315e6 80%,transparent);opacity:0}
+#banner b{font-family:var(--f-display);font-size:38px;letter-spacing:.2em;display:block;text-align:center}
+#banner span{display:block;text-align:center;font-size:13px;color:var(--muted);letter-spacing:.2em;margin-top:2px}
+#banner.show{animation:banner 1.5s ease-in-out forwards}
+#banner.heat b{color:var(--heat-soft)}
+#overlay{position:absolute;inset:0;z-index:95;background:#050c0deb;display:flex;flex-direction:column;align-items:center;padding:40px 60px}
+#overlay h2{font-family:var(--f-display);margin:0 0 4px;font-size:24px}
+#overlay .sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+#overlay .grid{display:flex;flex-wrap:wrap;gap:22px 18px;justify-content:center;overflow:auto;padding:16px;max-height:560px}
+#overlay .grid .card{position:relative;margin:0;transform:none;pointer-events:auto}
+#overlay .close{position:absolute;right:30px;top:24px;padding:8px 16px;border-radius:20px;border:1px solid #ffffff33;background:#ffffff10;cursor:pointer}
+#adv{position:absolute;right:0;top:56px;bottom:150px;width:380px;z-index:85;background:linear-gradient(180deg,#0e2226fa,#0b1a1dfa);border-left:1px solid #3aa0bd66;
+  padding:16px 18px;overflow:auto;transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.3,1);box-shadow:-20px 0 40px #0008}
+#adv.open{transform:none}
+#adv h3{margin:0;font-family:var(--f-display);font-size:18px;display:flex;align-items:center;gap:10px}
+#adv h3 .eye{width:22px;height:22px}
+#adv .x{margin-left:auto;border:1px solid #ffffff22;background:none;border-radius:14px;padding:3px 10px;cursor:pointer;font-size:12px}
+.advsec{margin-top:14px;border-radius:10px;padding:11px 12px}
+.advsec.eng{background:#ffffff08;border:1px solid #ffffff1a}
+.advsec.ai{background:#3aa0bd14;border:1px dashed #3aa0bd88}
+.advsec .tag{font-size:10px;letter-spacing:.14em;color:var(--muted);display:flex;justify-content:space-between;text-transform:uppercase}
+.advsec.ai .tag{color:#8fd2e2}
+.advsec ul{margin:8px 0 0;padding-left:16px;font-size:12.5px;line-height:1.6}
+.advsec li{margin-bottom:4px}
+.advsec li b{font-family:var(--f-num);font-weight:700}
+#adv .hl{margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid #3aa0bd88;background:#16323a;cursor:pointer;font-size:12px}
+#rotate{display:none}
+
+@keyframes pulse{50%{opacity:.35}}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+@keyframes banner{0%{opacity:0;transform:scaleY(.2)}18%{opacity:1;transform:none}78%{opacity:1}100%{opacity:0}}
+@keyframes burn{0%{filter:none}40%{filter:brightness(1.8) sepia(1) hue-rotate(-20deg);opacity:1}100%{filter:brightness(2) sepia(1);opacity:0;transform:var(--t) translateY(-60px) scale(.8)}}
+@media (prefers-reduced-motion:reduce){.card,.bar i,#adv{transition:none}#banner.show{animation-duration:.01s}.event.on .eyebrow .dot{animation:none}}
+@media (max-width:640px) and (orientation:portrait){#rotate{display:block;position:fixed;left:16px;right:16px;bottom:16px;padding:10px 12px;border-radius:10px;background:#152d2f;border:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center;z-index:200}}
+</style>
+
+</head>
+<body>
+<div id="stage">
+  <canvas id="city" width="1280" height="760"></canvas>
+  <canvas id="fx" width="1280" height="760"></canvas>
+
+  <header id="top">
+    <div class="place"><b data-i18n="place"></b><span data-i18n="placeSub"></span></div>
+    <div class="res">
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="#e6b84a"/><text x="10" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#3b2408">$</text></svg>
+        <div><span class="lab" data-i18n="finance"></span><span class="val num" id="rMoney"></span><span class="sub num delta" id="rMoneyD"></span></div></div>
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6" r="3.5" fill="#cfd8d3"/><path d="M3 18c0-4 3-7 7-7s7 3 7 7z" fill="#cfd8d3"/></svg>
+        <div><span class="lab" data-i18n="popCap"></span><span class="val num" id="rPop"></span></div></div>
+      <div class="chip"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2c4 3 6 6 6 9a6 6 0 0 1-12 0c0-3 2-6 6-9z" fill="#6cc46f"/></svg>
+        <div><span class="lab" data-i18n="liveLab"></span><span class="val num" id="rLive"></span></div></div>
+    </div>
+    <div class="clock">
+      <div class="temp" id="temp"><svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><rect x="4" y="1" width="4" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="16" r="3.2" fill="currentColor"/></svg><b class="num" id="tempV"></b></div>
+      <div class="timeline" id="timeline"></div>
+      <div class="date"><b id="dateV"></b><span id="turnV"></span></div>
+      <div id="lang" role="group" aria-label="Language / 语言"><button type="button" data-lang="zh" aria-pressed="false">中</button><button type="button" data-lang="en" aria-pressed="false">EN</button></div>
+    </div>
+  </header>
+
+  <aside class="rail" id="left">
+    <section class="panel event" id="eventPanel"></section>
+    <section class="panel goal" id="goalPanel"></section>
+  </aside>
+
+  <aside class="rail" id="right">
+    <button id="advBtn" type="button"><span class="eye"></span><span><b data-i18n="advisor"></b><small data-i18n="advisorSub"></small></span></button>
+    <section class="panel powers" id="powers"></section>
+    <p class="note" data-i18n="protoNote"></p>
+  </aside>
+
+  <div id="orb"><div><div class="n num" id="ppV"></div><div class="l" data-i18n="pp"></div></div></div>
+  <button class="pile" id="drawPile" type="button"><span class="stack"></span><span class="cnt" id="drawN"></span><span class="pl" data-i18n="drawPile"></span></button>
+  <button class="pile disc" id="discPile" type="button"><span class="stack"></span><span class="cnt" id="discN"></span><span class="pl" data-i18n="discPile"></span></button>
+  <button class="pile exh" id="exhPile" type="button" hidden><span class="stack"></span><span class="cnt" id="exhN"></span><span class="pl" data-i18n="exhPile"></span></button>
+  <div id="camCtl"><span class="hint" data-i18n="camHint"></span><div class="btns"><button type="button" data-cam="-1" data-i18n-aria="camL"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5H3V1M3.6 5A7 7 0 1 1 3 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button type="button" data-cam="0" data-i18n-aria="camReset"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 9.5 10 3l7 6.5M5 8v9h10V8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button><button type="button" data-cam="1" data-i18n-aria="camR"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M13 5h4V1M16.4 5A7 7 0 1 0 17 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div></div>
+  <button id="endTurn" type="button"><span data-i18n="endTurn"></span><small data-i18n="pressE"></small></button>
+
+  <div id="playline"><span data-i18n="release"></span></div>
+  <div id="hand"></div>
+  <svg id="arrow" width="1280" height="760"></svg>
+  <div id="kwtip" hidden></div>
+  <div id="tip" hidden></div>
+  <div id="pop" hidden></div>
+  <div id="toast"></div>
+  <div id="report" hidden></div>
+  <div id="banner"><div><b id="bannerT"></b><span id="bannerS"></span></div></div>
+  <aside id="adv"></aside>
+  <div id="overlay" hidden></div>
+</div>
+<div id="rotate" data-i18n="rotate"></div>
+
+<script src="vendor/three.min.js"></script>
+<script>window.THREE || document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
+<script>
+(() => {
+const W = 1280, H = 760;
+const $ = id => document.getElementById(id);
+const stage = $('stage'), canvas = $('city'), ctx = $('fx').getContext('2d');
+let SC = 1, RES = 1;
+
+/* ================= language ================= */
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STR = {
+  zh: {
+    docTitle:'HDB 生态社区', place:'大巴窑东 · 湖畔邻区', placeSub:'既有 HDB 生态改造',
+    finance:'财政', popCap:'人口 / 容量', liveLab:'实际宜居度',
+    advisor:'AI 政策顾问', advisorSub:'分析局势，不替你出牌', protoNote:'原型说明：所有数值均为占位，用于演示规则与交互。',
+    pp:'政治点', drawPile:'抽牌堆', discPile:'弃牌堆', exhPile:'已销毁', endTurn:'结束回合', pressE:'按 E', release:'松手打出', rotate:'横屏查看效果更好',
+    perTurn:'/回合', perTurnSp:' / 回合',
+    date: t => { const m = 2 + t; return m > 12 ? `2028年${m-12}月` : `2027年${m}月`; },
+    turnOf: (t, n) => `第 ${t} / ${n} 回合 · 每回合 1 个月`,
+    tlTitle: (t, d, heat, goal) => `第 ${t} 回合 · ${d}${heat ? ' · 极端高温' : ''}${goal ? ' · 目标截止' : ''}`,
+    money: v => `S$${v}万`,
+    kw: {
+      event:['事件限定','由事件自动发放，可以不用。事件结束时仍未使用，会自动销毁。'],
+      persist:['持续','打出后成为持续生效的政策，每回合结算开支，直到你打出对应的结束牌。事件结束也不会自动停止。'],
+      stop:['结束政策','启动持续政策时获得。打出后停止该政策及其开支，然后销毁。'],
+      retain:['保留','回合结束时不会被弃置，留在手中。'],
+      exhaust:['销毁','打出后移出本局牌组。'],
+    },
+    type:{policy:'政策', power:'持续政策', event:'事件应急', stop:'结束政策'}, typeOngoing:' · 持续',
+    ribbon:'事件限定 · 高温', givesStop: n => `打出后获得「${n}」。`, stopExhaust:'打出后<k>销毁</k>。',
+    cards:{
+      batch:['组屋批量绿化','选择一栋组屋：它与同一排两侧相邻的组屋一起进行生态改造，每栋只需 {$60}。'],
+      plant:['社区种树日','选择一块空地，免费建成口袋公园，覆盖周边 1 格组屋。'],
+      subsidy:['能源电费补贴','<k>持续</k>：热压力 ≥2 的组屋，高温宜居惩罚减半。每回合 −{$30}。'],
+      cool:['开放避暑点','本回合结算时，社区俱乐部和熟食中心周边组屋热压力 −1。'],
+      stopSubsidy:['结束能源补贴','停止「能源电费补贴」及其每回合支出。'],
+      visit:['热浪入户走访','抽 2 张牌。在地图上标出热压力最高的 3 栋组屋。'],
+      saver:['公共设施节能','永久：高温期间公共设施的额外电费减半。'],
+      fund:['绿地养护基金','<k>持续</k>：公共绿地覆盖半径 +1。每回合 −{$12}。'],
+      stopFund:['结束养护基金','停止「绿地养护基金」及其每回合支出。'],
+      reserve:['储备金调拨','从市镇理事会储备调拨：财政 +{$50}。'],
+      shade:['熟食中心遮荫','选择熟食中心：加装遮荫与通风，周边 1 格组屋热压力永久 −1。'],
+    },
+    fin:{income:'市镇收入', parks:'公共绿地维护', ups:'改造组屋维护', civic:'公共设施电费', heatPower:'高温额外电费', subsidy:'能源电费补贴', fund:'绿地养护基金'},
+    hawker:'熟食中心', cc:'社区俱乐部', heatBadge: n => '热' + n,
+    fUpg:'生态改造', fPark:'+ 绿地', fShade:'遮荫改造', fOut: d => `−${d} 人`, fIn: d => `+${d} 人`, fLive: v => `宜居 ${v}`,
+    noPP:'政治点数不足', partial:'财政不足，部分组屋未能改造',
+    started: (a, b) => `已启动「${a}」，获得「${b}」`, stopped: a => `已停止「${a}」`,
+    coolOn:'避暑点已开放：本回合结算生效', saverOn:'公共设施节能改造完成', reserveOn: m => `财政 +${m}`, reshuffle:'弃牌堆已洗入抽牌堆',
+    goalEarly: (m) => `阶段目标提前完成：${m}，政治点上限 +1`, goalDone:'阶段目标完成', goalFail:'阶段目标未完成：下回合政治点 −1，补救任务已开启',
+    remDone: m => `补救任务完成：${m}`, remFail:'补救任务未完成',
+    heatEnd: n => n ? `极端高温结束：${n} 张未使用的应急卡已销毁` : '极端高温结束', subsidyStill:'「能源电费补贴」仍在生效：效果大幅下降，支出照旧',
+    bannerT: t => `第 ${t} 回合`, bannerHeat:' · 极端高温持续中', bannerHeatEnd:' · 高温已结束',
+    repSrc:'规则引擎结算 · 确定值', repTitle: t => `第 ${t} 回合结算`, repTotal:'财政合计',
+    repFoot: (a, b, blks) => `社区实际宜居度 <b class="num">${a} → ${b}</b>${blks.length ? `；${blks.join('、')} 有居民迁出` : ''}`,
+    endTitle:'试玩结束', endSub:'12 个回合已完成。以下为规则引擎的最终结算。', endLive:'社区实际宜居度', endPop:'人口', endFin:'财政', endUps:'完成生态改造的组屋', endParks:'公共绿地', again:'重新开始',
+    evOn:'事件 · 进行中', evTitle: l => `极端高温 · 热指数 ${l} 级`,
+    evDesc:'逐栋计算热压力。组屋自身的生态改造和公共绿地覆盖都能降低压力。居民制冷开支上升会拉低实际宜居度。',
+    evUntil:'持续至', turnsLeft: (d, n) => `${d} · 剩 ${n} 回合`, evHot:'热压力 ≥2 的组屋', ofBlocks: (a, b) => `${a} / ${b} 栋`, evExtra:'公共设施额外电费',
+    evGrant: list => `应急卡 ${list.map(n => '「' + n + '」').join('')} 未使用的话，会在事件结束时销毁。`,
+    evOff:'事件', evNone:'暂无进行中的事件', evEnded: d => `极端高温已于 ${d} 结束。`,
+    evSubsidyLeft:'高温期间启动的能源补贴仍在支出，需要你手动结束。', evCalm:'利用这段时间推进绿化与改造。',
+    goalEyebrow:'阶段目标', goalTitle:'撑过热季', goalDesc: (t) => `第 ${t} 回合结束前，社区实际宜居度达到 70。`,
+    gDone:'已完成', gFail:'未完成', gDue: (d, n) => `截止 ${d} · 剩 ${n} 回合`,
+    rEarly:'提前完成', rEarlyV: m => `${m}，政治点上限 +1`, rMiss:'未完成', rMissV:'下回合政治点 −1，并开启补救任务',
+    rem: (t, a, n, st) => `补救任务：第 ${t} 回合前再改造 ${n} 栋组屋（${a}/${n}）${st === 'done' ? ' · 已完成' : st === 'fail' ? ' · 失败' : ''}`,
+    upgCount:'已生态改造',
+    powersH:'生效中的政策', powerBadge:'持', permBadge:'永', subsidyWeak:'高温已过，效果仅剩 +1 宜居',
+    powersEmpty:'暂无持续政策。打出带「持续」的牌后会显示在这里。', saverName:'公共设施节能', saverDesc:'高温额外电费减半',
+    close:'关闭', advEng:'引擎计算 · 确定值', advEngR:'来自游戏规则', advAi:'AI 判断 · 建议', advAiR:'可能不准确', advHl:'在手牌中标出相关的牌',
+    advNote:'顾问只读取当前局面并给出解释，不会替你出牌，也不会修改任何数值。',
+    eLive: v => `社区实际宜居度 <b>${v}</b>，目标 70。`, eFin: m => `本回合预计财政 <b>${m}</b>。`,
+    eHot: (n, list, more) => `热压力 ≥2 的组屋 <b>${n}</b> 栋${n ? '：' + list.join('、') + (more ? ' 等' : '') : ''}。`,
+    eSub: (a, b, m) => `若启动能源补贴：宜居度 <b>${a} → ${b}</b>，每回合 −${m}。`, eCool: (a, b) => `若开放避暑点：本回合宜居度 <b>${a} → ${b}</b>。`,
+    eSubWeak: m => `能源补贴当前只带来 <b>+1</b> 宜居，但仍每回合支出 <b>${m}</b>。`,
+    aHot:'高温还会持续，热压力集中在没有绿地覆盖、也未改造的组屋。先把这几栋处理掉，比全区平均撒钱更划算。',
+    aSub:'能源补贴见效快，但它会一直扣钱，直到你打出结束牌。启动前想好在哪个回合关掉它。',
+    aSubEnd:'高温已经过去，这笔补贴几乎没有作用了。可以考虑打出「结束能源补贴」。',
+    aUnc: (n, list) => `有 ${n} 栋组屋既不在绿地覆盖内、也没有改造：${list.join('、')}。在它们旁边的空地种树，可以一次覆盖好几栋。`,
+    aLow:'财政余额偏低，维护费和电费会继续扣。下一步改造前，先确认还剩多少余量。', aCalm:'局势平稳。可以考虑把钱投在长期改造上，为下一次热季做准备。',
+    tBlk: b => `Blk ${b} 组屋`, tRes:'居民', tUpg:'生态改造', tDone:'已完成', tNot:'未改造', tCov:'公共绿地覆盖', yes:'是', no:'否', tBase:'基础宜居度',
+    tStress:'热压力', tPen:'高温惩罚', tHalved:'（补贴减半）', tActual:'实际宜居度', tClickUpg: m => `点击：生态改造 ${m}`,
+    tEmpty:'空地', tParkCost:'可建造公共绿地', tClickBuild:'点击建造', tPark:'公共绿地', tRadius:'覆盖半径', tiles: n => `${n} 格`, tUpkeep:'维护费',
+    tKind:'性质', tAmenity:'公共民生设施', tShade:'遮荫改造', tNotYet:'未进行', tFacility:'公共设施', tCarpark:'多层停车场', tConvert:'可收回改作绿地', tClickView:'点击查看',
+    pUpgT: b => `Blk ${b} 生态改造`, pUpgB:'屋顶绿化与立面种植箱。只提升本栋的基础宜居度，降低高温热压力。不增加住房容量。',
+    pParkT:'建造公共绿地', pParkB: (r, m) => `覆盖周边 ${r} 格内的组屋：基础宜居度上升，热压力降低。每回合维护 ${m}。`,
+    pCarT:'停车场改作绿地', pCarB:'收回现有用地并重新规划为公共绿地。成本比空地更高。', build: m => `建造 · ${m}`, cancel:'取消',
+    vDraw:'抽牌堆', vDrawS: n => `共 ${n} 张，按名称排列（不显示抽取顺序）`, vDisc:'弃牌堆', vDiscS: n => `共 ${n} 张。抽牌堆用完时会洗回抽牌堆。`,
+    vExh:'已销毁', vExhS:'这些牌已移出本局牌组。', vEmpty:'这里还没有牌。',
+    camHint:'拖动地图旋转 · 滚轮缩放', camL:'向左旋转视角', camR:'向右旋转视角', camReset:'重置视角',
+    aDraw:'查看抽牌堆', aDisc:'查看弃牌堆', aExh:'查看已销毁的牌', aTimeline:'回合进度',
+  },
+  en: {
+    docTitle:'HDB Eco Community', place:'Toa Payoh East', placeSub:'Lakeside · HDB eco-retrofit',
+    finance:'Finance', popCap:'Residents / Capacity', liveLab:'Liveability',
+    advisor:'AI Policy Advisor', advisorSub:'Explains the situation. Never plays for you.', protoNote:'Prototype note: all numbers are placeholders for showing the rules and interactions.',
+    pp:'Political', drawPile:'Draw', discPile:'Discard', exhPile:'Exhausted', endTurn:'End Turn', pressE:'Press E', release:'Release to play', rotate:'Best viewed in landscape',
+    perTurn:'/turn', perTurnSp:' / turn',
+    date: t => { const m = 2 + t; return m > 12 ? `${MON[m-13]} 2028` : `${MON[m-1]} 2027`; },
+    turnOf: (t, n) => `Turn ${t} / ${n} · 1 month per turn`,
+    tlTitle: (t, d, heat, goal) => `Turn ${t} · ${d}${heat ? ' · Extreme heat' : ''}${goal ? ' · Goal deadline' : ''}`,
+    money: v => { const a = Math.abs(v); return a >= 100 ? `S$${(+(a/100).toFixed(2))}M` : `S$${a*10}k`; },
+    kw: {
+      event:['Event-only','Granted automatically by an event. You may leave it unused. If it is still unused when the event ends, it is exhausted.'],
+      persist:['Ongoing','Becomes an ongoing policy. Its cost is charged every turn until you play its matching End card. It does not stop when an event ends.'],
+      stop:['End Policy','Granted when you start an ongoing policy. Play it to stop that policy and its cost. Then it is exhausted.'],
+      retain:['Retain','Stays in your hand at the end of the turn instead of being discarded.'],
+      exhaust:['Exhaust','Removed from your deck for the rest of the game after it is played.'],
+    },
+    type:{policy:'Policy', power:'Ongoing Policy', event:'Emergency', stop:'End Policy'}, typeOngoing:' · Ongoing',
+    ribbon:'Event-only · Heat', givesStop: n => `Adds \"${n}\".`, stopExhaust:'<k>Exhaust</k>.',
+    cards:{
+      batch:['Bulk Block Greening','Pick a block: retrofit it and its two row neighbours for {$60} each.'],
+      plant:['Planting Day','Pick an empty lot: build a free pocket park covering blocks within 1 tile.'],
+      subsidy:['Energy Bill Subsidy','<k>Ongoing</k>: blocks at heat stress ≥2 take half the heat penalty. −{$30} per turn.'],
+      cool:['Cooling Centres','At this turn\'s settlement, blocks next to the CC and hawker centre get −1 heat stress.'],
+      stopSubsidy:['End Energy Subsidy','Stop the Energy Bill Subsidy and its per-turn cost.'],
+      visit:['Heatwave Visits','Draw 2 cards. Mark the 3 blocks under the most heat stress.'],
+      saver:['Power Saving','Permanent: the heat power surcharge on public facilities is halved.'],
+      fund:['Green Upkeep Fund','<k>Ongoing</k>: green space coverage radius +1. −{$12} per turn.'],
+      stopFund:['End Upkeep Fund','Stop the Green Upkeep Fund and its per-turn cost.'],
+      reserve:['Reserve Transfer','Draw on Town Council reserves: finance +{$50}.'],
+      shade:['Hawker Shading','Pick the hawker centre: add shade and fans. Blocks within 1 tile get −1 heat stress for good.'],
+    },
+    fin:{income:'Town income', parks:'Green space upkeep', ups:'Retrofit upkeep', civic:'Public facility power', heatPower:'Heat power surcharge', subsidy:'Energy Bill Subsidy', fund:'Green Upkeep Fund'},
+    hawker:'Hawker Centre', cc:'Community Club', heatBadge: n => 'Heat ' + n,
+    fUpg:'Retrofitted', fPark:'+ Park', fShade:'Shaded', fOut: d => `−${d} residents`, fIn: d => `+${d} residents`, fLive: v => `Liveability ${v}`,
+    noPP:'Not enough political points', partial:'Not enough funds: some blocks were not retrofitted',
+    started: (a, b) => `Started \"${a}\". \"${b}\" added to your hand.`, stopped: a => `Stopped \"${a}\".`,
+    coolOn:'Cooling centres open: applies at this turn\'s settlement', saverOn:'Public facility power saving in place', reserveOn: m => `Finance +${m}`, reshuffle:'Discard pile shuffled into the draw pile',
+    goalEarly: (m) => `Goal met early: +${m}, max political points +1`, goalDone:'Goal met', goalFail:'Goal missed: −1 political point next turn. Recovery task started.',
+    remDone: m => `Recovery task complete: +${m}`, remFail:'Recovery task failed',
+    heatEnd: n => n ? `Extreme heat is over: ${n} unused emergency card${n > 1 ? 's' : ''} exhausted` : 'Extreme heat is over', subsidyStill:'Energy Bill Subsidy is still running: much weaker now, same cost',
+    bannerT: t => `Turn ${t}`, bannerHeat:' · Extreme heat ongoing', bannerHeatEnd:' · The heat is over',
+    repSrc:'Rules engine · exact values', repTitle: t => `Turn ${t} settlement`, repTotal:'Finance total',
+    repFoot: (a, b, blks) => `Liveability <b class="num">${a} → ${b}</b>${blks.length ? `. Residents moved out of ${blks.join(', ')}.` : ''}`,
+    endTitle:'Demo complete', endSub:'All 12 turns played. Final results from the rules engine.', endLive:'Liveability', endPop:'Residents', endFin:'Finance', endUps:'Retrofitted blocks', endParks:'Green spaces', again:'Play again',
+    evOn:'Event · Active', evTitle: l => `Extreme Heat · Level ${l}`,
+    evDesc:'Heat stress is worked out per block. Retrofits and green space lower it, and cooling bills pull liveability down.',
+    evUntil:'Lasts until', turnsLeft: (d, n) => `${d} · ${n} turn${n > 1 ? 's' : ''} left`, evHot:'Blocks at heat stress ≥2', ofBlocks: (a, b) => `${a} / ${b}`, evExtra:'Extra public power cost',
+    evGrant: list => `${list.length} emergency card${list.length > 1 ? 's' : ''} from this event will be exhausted if still unused when it ends.`,
+    evOff:'Event', evNone:'No active event', evEnded: d => `The extreme heat ended in ${d}. `,
+    evSubsidyLeft:'The energy subsidy you started during the heat is still being paid. You have to end it yourself.', evCalm:'Use this time to push greening and retrofits.',
+    goalEyebrow:'Stage goal', goalTitle:'Survive the Hot Season', goalDesc: (t) => `Reach liveability 70 by the end of turn ${t}.`,
+    gDone:'Complete', gFail:'Missed', gDue: (d, n) => `Due ${d} · ${n} left`,
+    rEarly:'Early bonus', rEarlyV: m => `+${m}, +1 max political points`, rMiss:'If missed', rMissV:'−1 political point, recovery task',
+    rem: (t, a, n, st) => `Recovery task: retrofit ${n} more blocks by turn ${t} (${a}/${n})${st === 'done' ? ' · done' : st === 'fail' ? ' · failed' : ''}`,
+    upgCount:'Retrofitted',
+    powersH:'Active policies', powerBadge:'ON', permBadge:'∞', subsidyWeak:'Heat is over: only +1 liveability now',
+    powersEmpty:'No ongoing policies. Cards marked Ongoing show up here once played.', saverName:'Power Saving', saverDesc:'Heat power surcharge halved',
+    close:'Close', advEng:'Engine · exact values', advEngR:'From the game rules', advAi:'AI judgement · advice', advAiR:'May be wrong', advHl:'Highlight relevant cards in hand',
+    advNote:'The advisor only reads the current state and explains it. It never plays cards or changes any numbers.',
+    eLive: v => `Liveability is <b>${v}</b>. The target is 70.`, eFin: m => `Projected finance this turn: <b>${m}</b>.`,
+    eHot: (n, list, more) => `<b>${n}</b> block${n === 1 ? '' : 's'} at heat stress ≥2${n ? ': ' + list.join(', ') + (more ? ' and more' : '') : ''}.`,
+    eSub: (a, b, m) => `If you start the energy subsidy: liveability <b>${a} → ${b}</b>, −${m} per turn.`, eCool: (a, b) => `If you open cooling centres: liveability this turn <b>${a} → ${b}</b>.`,
+    eSubWeak: m => `The energy subsidy now adds only <b>+1</b> liveability but still costs <b>${m}</b> per turn.`,
+    aHot:'The heat will continue. Stress is concentrated in blocks with no green space coverage and no retrofit. Fixing those first is better value than spreading money across the whole precinct.',
+    aSub:'The energy subsidy works fast, but it keeps costing money until you play its End card. Decide which turn you will end it before you start it.',
+    aSubEnd:'The heat is over and this subsidy does almost nothing now. Consider playing \"End Energy Subsidy\".',
+    aUnc: (n, list) => `${n} blocks have neither green space coverage nor a retrofit: ${list.join(', ')}. Planting on an empty lot next to them can cover several at once.`,
+    aLow:'Finance is running low, and upkeep and power costs keep coming. Check your margin before the next retrofit.', aCalm:'Things are stable. Consider putting money into long-term retrofits to prepare for the next hot season.',
+    tBlk: b => `Blk ${b}`, tRes:'Residents', tUpg:'Eco-retrofit', tDone:'Done', tNot:'Not yet', tCov:'Green space coverage', yes:'Yes', no:'No', tBase:'Base liveability',
+    tStress:'Heat stress', tPen:'Heat penalty', tHalved:' (halved by subsidy)', tActual:'Actual liveability', tClickUpg: m => `Click: eco-retrofit for ${m}`,
+    tEmpty:'Empty lot', tParkCost:'Build green space', tClickBuild:'Click to build', tPark:'Green space', tRadius:'Coverage radius', tiles: n => `${n} tile${n > 1 ? 's' : ''}`, tUpkeep:'Upkeep',
+    tKind:'Type', tAmenity:'Public amenity', tShade:'Shading', tNotYet:'Not yet', tFacility:'Public facility', tCarpark:'Multi-storey car park', tConvert:'Convert to green space', tClickView:'Click for details',
+    pUpgT: b => `Eco-retrofit Blk ${b}`, pUpgB:'Rooftop greening and façade planters. Raises this block\'s base liveability and lowers its heat stress. Does not add housing capacity.',
+    pParkT:'Build green space', pParkB: (r, m) => `Covers blocks within ${r} tile${r > 1 ? 's' : ''}: raises base liveability and lowers heat stress. Upkeep ${m} per turn.`,
+    pCarT:'Convert car park to green space', pCarB:'Reclaim the existing land and replan it as green space. Costs more than an empty lot.', build: m => `Build · ${m}`, cancel:'Cancel',
+    vDraw:'Draw pile', vDrawS: n => `${n} cards, sorted by name (draw order hidden)`, vDisc:'Discard pile', vDiscS: n => `${n} cards. Shuffled back into the draw pile when it runs out.`,
+    vExh:'Exhausted', vExhS:'These cards are out of your deck for this game.', vEmpty:'No cards here yet.',
+    camHint:'Drag to rotate · Scroll to zoom', camL:'Rotate view left', camR:'Rotate view right', camReset:'Reset view',
+    aDraw:'View draw pile', aDisc:'View discard pile', aExh:'View exhausted cards', aTimeline:'Turn progress',
+  },
+};
+let lang = 'zh';
+try {
+  const saved = localStorage.getItem('hdb-lang');
+  if (location.hash === '#en' || location.hash === '#zh') lang = location.hash.slice(1);
+  else if (saved === 'en' || saved === 'zh') lang = saved;
+  else lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+} catch (e) { lang = /^zh/i.test(navigator.language || '') ? 'zh' : 'en'; }
+const L = () => STR[lang];
+const money = v => L().money(v);
+const signed = v => (v < 0 ? '−' : '+') + money(Math.abs(v));
+
+function applyStatic(){
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = L().docTitle;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = L()[el.dataset.i18n]; });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', L()[el.dataset.i18nAria]); el.title = L()[el.dataset.i18nAria]; });
+  document.querySelectorAll('#lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  $('drawPile').setAttribute('aria-label', L().aDraw); $('discPile').setAttribute('aria-label', L().aDisc); $('exhPile').setAttribute('aria-label', L().aExh);
+  $('timeline').setAttribute('aria-label', L().aTimeline);
+  $('adv').setAttribute('aria-label', L().advisor);
+}
+function setLang(l){
+  if (l === lang) return;
+  lang = l;
+  try { localStorage.setItem('hdb-lang', l); } catch (e) {}
+  applyStatic();
+  els.forEach((el, id) => { const c = state.hand.find(h => h.uid === id); if (c) el.innerHTML = cardHTML(c); });
+  $('overlay').hidden = true; $('tip').hidden = true; closePop(); $('report').hidden = true;
+  render();
+}
+document.querySelectorAll('#lang button').forEach(b => {
+  b.addEventListener('click', () => setLang(b.dataset.lang));
+  b.addEventListener('pointerdown', e => e.stopPropagation());
+});
+
+/* ================= data ================= */
+// H = HDB 组屋, . = 空地, P = 公共绿地, R = 道路, F = 熟食中心, C = 社区俱乐部, K = 多层停车场
+const MAP = [
+  "H.HP.HH.C",
+  "H.H..H..H",
+  "RRRRRRRRR",
+  ".HH.F.HK.",
+  "PH..H..HH",
+  "RRRRRRRRR",
+  "HH.H.KH.P",
+  "H..H..H.H",
+];
+const CARDS = {
+  batch:  {cost:2, type:'policy', target:'hdb', art:'batch'},
+  plant:  {cost:1, type:'policy', target:'empty', art:'tree'},
+  subsidy:{cost:1, type:'event', event:true, retain:true, exhaust:true, persist:'subsidy', art:'bolt'},
+  cool:   {cost:0, type:'event', event:true, retain:true, exhaust:true, art:'cool'},
+  stopSubsidy:{cost:0, type:'stop', retain:true, exhaust:true, stops:'subsidy', art:'stop'},
+  visit:  {cost:1, type:'policy', art:'visit'},
+  saver:  {cost:2, type:'policy', exhaust:true, art:'saver'},
+  fund:   {cost:1, type:'power', persist:'fund', art:'fund'},
+  stopFund:{cost:0, type:'stop', retain:true, exhaust:true, stops:'fund', art:'stop'},
+  reserve:{cost:1, type:'policy', exhaust:true, art:'coin'},
+  shade:  {cost:1, type:'policy', target:'hawker', art:'shade'},
+};
+const cname = key => L().cards[key][0];
+const ctext = key => L().cards[key][1].replace(/\{\$(\d+)\}/g, (_, n) => money(+n));
+const POLICY = {
+  subsidy:{card:'subsidy', cost:30, stop:'stopSubsidy', ev:true},
+  fund:   {card:'fund', cost:12, stop:'stopFund'},
+};
+const HEAT = {4:2, 5:3, 6:2};           // 回合 → 热指数等级（极端高温：第 4–6 回合）
+const EVENT_END = 6, GOAL_DEADLINE = 7, MAX_TURN = 12;
+const BASE_UPG_COST = 120, PARK_COST = 80, CARPARK_COST = 150;
+
+let tiles, hdbs, state, uid = 0;
+function newCard(key){ return {uid: ++uid, key}; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function init(){
+  tiles = []; hdbs = []; let blk = 101;
+  MAP.forEach((row, gy) => [...row].forEach((ch, gx) => {
+    const t = {gx, gy, kind:{H:'hdb','.':'empty',P:'park',R:'road',F:'hawker',C:'cc',K:'carpark'}[ch]};
+    if (t.kind === 'hdb'){
+      const i = hdbs.length;
+      Object.assign(t, {blk: blk++, base: 54 + (i*7)%13, cap: 240 + ((i*3)%4)*30, h: 62 + ((i*5)%4)*12,
+        hue: ['#e9dcb8','#cfe0ea','#f1cdb4','#d9d1ea','#d4e6cf'][i%5], band: ['#c0563f','#3d7fa6','#c98a2a','#6a5aa8','#3f8f5f'][(i*2)%5],
+        up:false, low:0});
+      t.pop = Math.round(t.cap * (0.86 + ((i*11)%9)/100));
+      hdbs.push(t);
+    }
+    tiles.push(t);
+  }));
+  state = {turn:4, money:820, pp:3, ppMax:3, ppPenalty:0, policies:{subsidy:false, fund:false}, saver:false, cool:false,
+    hand:[], draw:[], discard:[], exhaust:[], goal:'active', remedial:null, busy:false, marked:[], prevLive:null};
+  state.hand = ['subsidy','cool','plant','batch','visit'].map(newCard);
+  state.draw = shuffle(['batch','plant','visit','saver','fund','reserve','reserve','shade','plant','batch'].map(newCard));
+}
+const tileAt = (gx, gy) => tiles.find(t => t.gx === gx && t.gy === gy);
+const cheb = (a, b) => Math.max(Math.abs(a.gx-b.gx), Math.abs(a.gy-b.gy));
+
+/* ================= rules engine (deterministic, placeholder numbers) ================= */
+const heatLv = t => HEAT[t] || 0;
+const eventOn = () => state.turn <= EVENT_END && heatLv(state.turn) > 0;
+function radius(){ return 1 + (state.policies.fund ? 1 : 0); }
+function covered(b, extraPark){
+  const r = radius();
+  return tiles.some(t => (t.kind === 'park' || t === extraPark) && cheb(t, b) <= r);
+}
+function evalB(b, opt = {}){
+  const heat = heatLv(state.turn);
+  const cov = covered(b, opt.extraPark);
+  const up = b.up || (opt.upg && opt.upg.includes(b));
+  const nearCivic = tiles.some(t => (t.kind === 'cc' || t.kind === 'hawker') && cheb(t, b) <= 1);
+  const shaded = tiles.some(t => t.kind === 'hawker' && t.shaded && cheb(t, b) <= 1);
+  const cool = (opt.cool ?? state.cool) && nearCivic;
+  const stress = heat ? Math.max(0, heat - (up?1:0) - (cov?1:0) - (cool?1:0) - (shaded?1:0)) : 0;
+  const subsidy = opt.subsidy ?? state.policies.subsidy;
+  let penalty = stress * 7;
+  if (subsidy && stress >= 2) penalty = Math.round(penalty / 2);
+  const base = b.base + (up ? 8 : 0) + (cov ? 5 : 0);
+  const actual = base - penalty + (subsidy && !heat ? 1 : 0);
+  return {cov, up, stress, penalty, base, actual, subsidy};
+}
+function community(opt){
+  let s = 0, p = 0;
+  hdbs.forEach(b => { s += evalB(b, opt).actual * b.pop; p += b.pop; });
+  return s / p;
+}
+function finance(opt = {}){
+  const heat = heatLv(state.turn);
+  const pop = hdbs.reduce((a, b) => a + b.pop, 0);
+  const parks = tiles.filter(t => t.kind === 'park').length;
+  const ups = hdbs.filter(b => b.up).length;
+  const civic = tiles.filter(t => ['hawker','cc','carpark'].includes(t.kind));
+  const Ls = [['income', Math.round(pop * 0.016)], ['parks', -parks*4], ['ups', -ups*1], ['civic', -civic.length*4]];
+  if (heat){
+    let extra = 0;
+    civic.forEach(t => { extra += 4 * heat * (state.saver ? 0.5 : 1) * (t.shaded ? 0.5 : 1); });
+    Ls.push(['heatPower', -Math.round(extra)]);
+  }
+  if (opt.subsidy ?? state.policies.subsidy) Ls.push(['subsidy', -POLICY.subsidy.cost]);
+  if (state.policies.fund) Ls.push(['fund', -POLICY.fund.cost]);
+  return Ls;
+}
+const sum = Ls => Ls.reduce((a, [, v]) => a + v, 0);
+
+/* ================= 3D city (Three.js, low-poly, rotatable camera) ================= */
+// Tile (gx, gy) sits at world x = gx - 4, z = gy - 3.5; y is up. The rules engine never sees any of this.
+const tx = t => t.gx - 4, tz = t => t.gy - 3.5;
+const hdbH = t => t.h / 50;
+const VIEW = {az: Math.PI/4, el: .62, zoom: 1, taz: Math.PI/4, tel: .62, tzoom: 1};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+let renderer = null, scene, cam, sun, hemi, world, groundMat, raycaster, pickables = [], GEO, MAT;
+let hover = null, targetHover = null, now = 0, floats = [];
+function shade(hex, f){ const n = parseInt(hex.slice(1),16); const r=(n>>16)&255,g=(n>>8)&255,b=n&255; return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`; }
+function mix(a, b, t){ const A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16); const c=s=>Math.round(((A>>s)&255)*(1-t)+((B>>s)&255)*t); return `rgb(${c(16)},${c(8)},${c(0)})`; }
+function greenness(){
+  const parks = tiles.filter(t => t.kind === 'park').length, ups = hdbs.filter(b => b.up).length;
+  return Math.min(1, (parks*1.4 + ups) / (hdbs.length * 0.9));
+}
+function lambert(c, extra){ return new THREE.MeshLambertMaterial(Object.assign({color: c}, extra || {})); }
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+const texCache = {};
+function facadeTex(t, up){
+  const key = [t.hue, t.band, t.h, up].join('|');
+  return texCache[key] || (texCache[key] = canvasTex(64, 256, (g, w, h) => {
+    g.fillStyle = t.hue; g.fillRect(0, 0, w, h);
+    const floors = Math.round(t.h / 7), fh = h / floors;
+    for (let i = 1; i < floors; i++){
+      const y = h - i*fh;
+      g.fillStyle = shade(t.hue, .45);
+      for (let x = 4; x < w - 4; x += 10) g.fillRect(x, y + fh*.22, 5, fh*.42);
+      g.fillStyle = shade(t.hue, .66); g.fillRect(0, y + fh - 2, w, 2);
+      if (up && i % 2 === 0){ g.fillStyle = '#4fa255'; g.fillRect(0, y + fh - 6, w, 4); }
+    }
+    g.fillStyle = t.band; g.fillRect(0, 0, w, h*.07);
+    if (up){ g.fillStyle = '#5fae5c'; [6, 30, 54].forEach(x => g.fillRect(x, h*.12, 3, h*.8)); }
+  }));
+}
+function init3D(){
+  if (!window.THREE) return false;
+  try { renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true}); }
+  catch (e) { renderer = null; return false; }
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene();
+  cam = new THREE.OrthographicCamera(-1, 1, 1, -1, .1, 200);
+  cam.setViewOffset(W, H, -60, 46, W, H);           // nudge the map right of the left rail and above the hand
+  hemi = new THREE.HemisphereLight(0xdff0ff, 0x46564c, .75); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff4e0, .85);
+  sun.position.set(6, 14, 5); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  Object.assign(sun.shadow.camera, {left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40});
+  sun.shadow.bias = -.0008;
+  scene.add(sun);
+  raycaster = new THREE.Raycaster();
+  GEO = {
+    slab: new THREE.BoxGeometry(.98, .12, .98), hl: new THREE.PlaneGeometry(.96, .96), ring: new THREE.RingGeometry(.5, .6, 32),
+    cone: new THREE.ConeGeometry(.15, .42, 5), trunk: new THREE.CylinderGeometry(.025, .03, .12, 5), dash: new THREE.BoxGeometry(.2, .01, .04),
+  };
+  const emptyTop = canvasTex(64, 64, (g, w, h) => {
+    g.fillStyle = '#9a8f78'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#f2eee399'; g.lineWidth = 2; g.setLineDash([5, 5]); g.strokeRect(9, 9, w - 18, h - 18);
+  });
+  const parkade = canvasTex(32, 64, (g, w, h) => {
+    g.fillStyle = '#8b908d'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#2b2f2e'; for (let y = 10; y < h; y += 16) g.fillRect(0, y, w, 5);
+  });
+  groundMat = lambert(0x7f857c);
+  MAT = {
+    road: lambert(0x3d4446), park: lambert(0x4f9a52), side: lambert(0x6f7469), dash: lambert(0xd9d3c4),
+    empty: [lambert(0x7d7462), lambert(0x7d7462), lambert(0xffffff, {map: emptyTop}), lambert(0x7d7462), lambert(0x7d7462), lambert(0x7d7462)],
+    carparkGround: lambert(0x6d7270), parkade: lambert(0xffffff, {map: parkade}), parkadeTop: lambert(0x9a9f9c),
+    trunk: lambert(0x6b4a2e), leaf: lambert(0x5fae5c, {flatShading: true}), leaf2: lambert(0x7fd07a, {flatShading: true}),
+    sand: lambert(0xc9b79a), roofRed: lambert(0xd85a35, {flatShading: true}), roofGreen: lambert(0x5aa85c, {flatShading: true}),
+    cc: lambert(0x7cc0b6), flag: lambert(0xef5a4c), pole: lambert(0xdddddd), plinth: lambert(0x26302c),
+  };
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(9.3, .5, 8.3), MAT.plinth);
+  plinth.position.y = -.25; plinth.receiveShadow = true; scene.add(plinth);
+  world = new THREE.Group(); scene.add(world);
+  return true;
+}
+function tree3D(grp, x, z, s, y = .12, leaf = MAT.leaf){
+  const tr = new THREE.Mesh(GEO.trunk, MAT.trunk); tr.position.set(x, y + .06*s, z); tr.scale.setScalar(s);
+  const cr = new THREE.Mesh(GEO.cone, leaf); cr.position.set(x, y + .3*s, z); cr.scale.setScalar(s); cr.rotation.y = x * 7;
+  cr.castShadow = true; grp.add(tr, cr);
+}
+const tileSig = t => [t.kind, t.up, t.shaded].join('|');
+function buildTile(t){
+  if (t.obj) world.remove(t.obj);
+  const g = new THREE.Group(); g.position.set(tx(t), 0, tz(t));
+  t.picks = []; t.side = null; t.topY = .12;
+  const slabMat = t.kind === 'road' ? MAT.road : t.kind === 'park' ? MAT.park : t.kind === 'empty' ? MAT.empty : t.kind === 'carpark' ? MAT.carparkGround : groundMat;
+  const slab = new THREE.Mesh(GEO.slab, slabMat); slab.position.y = .06; slab.receiveShadow = true;
+  g.add(slab); t.picks.push(slab);
+  if (t.kind === 'road') [-.24, .24].forEach(x => { const d = new THREE.Mesh(GEO.dash, MAT.dash); d.position.set(x, .125, 0); g.add(d); });
+  if (t.kind === 'park') [[-.26,-.18,1],[.22,-.24,.9],[0,.12,1.15],[-.2,.28,.85],[.3,.24,.8]].forEach(([x, z, s]) => tree3D(g, x, z, s));
+  if (t.kind === 'hawker'){
+    const base = new THREE.Mesh(new THREE.BoxGeometry(.86, .26, .86), MAT.sand); base.position.y = .25; base.castShadow = base.receiveShadow = true;
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(.7, .32, 4), t.shaded ? MAT.roofGreen : MAT.roofRed);
+    roof.rotation.y = Math.PI/4; roof.position.y = .54; roof.castShadow = true;
+    g.add(base, roof); t.picks.push(base, roof); t.topY = .7;
+  }
+  if (t.kind === 'cc'){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.8, .5, .8), MAT.cc); b.position.y = .37; b.castShadow = b.receiveShadow = true;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .5, 4), MAT.pole); pole.position.set(.28, .87, .28);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(.18, .1, .01), MAT.flag); flag.position.set(.37, 1.05, .28);
+    g.add(b, pole, flag); t.picks.push(b); t.topY = 1.1;
+  }
+  if (t.kind === 'carpark'){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.84, .55, .84), [MAT.parkade, MAT.parkade, MAT.parkadeTop, MAT.parkadeTop, MAT.parkade, MAT.parkade]);
+    b.position.y = .395; b.castShadow = b.receiveShadow = true; g.add(b); t.picks.push(b); t.topY = .67;
+  }
+  if (t.kind === 'hdb'){
+    const hgt = hdbH(t);
+    t.side = new THREE.MeshLambertMaterial({map: facadeTex(t, t.up), emissive: 0xff5a1e, emissiveIntensity: 0});
+    const roofMat = t.up ? MAT.roofGreen : lambert(shade(t.hue, .9));
+    const b = new THREE.Mesh(new THREE.BoxGeometry(.72, hgt, .72), [t.side, t.side, roofMat, roofMat, t.side, t.side]);
+    b.position.y = .12 + hgt/2; b.castShadow = b.receiveShadow = true;
+    g.add(b); t.picks.push(b); t.topY = .12 + hgt;
+    if (t.up) [[-.18,-.15],[.16,-.1],[-.05,.16],[.2,.2]].forEach(([x, z]) => tree3D(g, x, z, .55, t.topY, MAT.leaf2));
+    t.ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({color: 0x8fd2e2, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false}));
+    t.ring.rotation.x = -Math.PI/2; t.ring.position.y = .13; t.ring.visible = false; g.add(t.ring);
+  }
+  t.hl = new THREE.Mesh(GEO.hl, new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: .2, depthWrite: false}));
+  t.hl.rotation.x = -Math.PI/2; t.hl.position.y = .125; t.hl.visible = false; g.add(t.hl);
+  t.picks.forEach(m => m.userData.tile = t);
+  t.obj = g; t.sig = tileSig(t); world.add(g);
+}
+function sync3D(){
+  if (!renderer) return;
+  let changed = false;
+  tiles.forEach(t => { if (t.sig !== tileSig(t)){ buildTile(t); changed = true; } });
+  if (changed) pickables = tiles.flatMap(t => t.picks);
+}
+function reset3D(){
+  if (!renderer) return;
+  while (world.children.length) world.remove(world.children[0]);
+  sync3D();
+}
+function proj(x, y, z){
+  const v = new THREE.Vector3(x, y, z).project(cam);
+  return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H, v.z];
+}
+function tileScreen(t, lift = 0){ return renderer ? proj(tx(t), (t.topY || .12) + lift, tz(t)) : [700, 320, 0]; }
+function pick(x, y){
+  if (!renderer) return null;
+  raycaster.setFromCamera({x: x / W * 2 - 1, y: -(y / H * 2 - 1)}, cam);
+  const hit = raycaster.intersectObjects(pickables, false)[0];
+  return hit ? hit.object.userData.tile : null;
+}
+function frame3D(){
+  if (!renderer) return;
+  VIEW.az += (VIEW.taz - VIEW.az) * .14; VIEW.el += (VIEW.tel - VIEW.el) * .14; VIEW.zoom += (VIEW.tzoom - VIEW.zoom) * .14;
+  const d = 30;
+  cam.position.set(Math.sin(VIEW.az) * Math.cos(VIEW.el) * d, Math.sin(VIEW.el) * d, Math.cos(VIEW.az) * Math.cos(VIEW.el) * d);
+  cam.lookAt(0, 0, 0);
+  const hh = 6.3 / VIEW.zoom;
+  cam.left = -hh * W / H; cam.right = hh * W / H; cam.top = hh; cam.bottom = -hh; cam.updateProjectionMatrix();
+  const heat = heatLv(state.turn);
+  groundMat.color.set(mix('#7f857c', '#6f9a62', greenness()));
+  sun.color.set(heat ? 0xffdcb8 : 0xfff4e0); sun.intensity = heat ? .95 : .85;
+  hemi.color.set(heat ? 0xffeedd : 0xdff0ff);
+  // tile highlights: target under the arrow > valid targets > park coverage > plain hover
+  const tcard = drag && drag.card && CARDS[drag.card.key].target ? drag.card : null;
+  let covSrc = hover && hover.kind === 'park' ? hover : null;
+  if (tcard && CARDS[tcard.key].target === 'empty' && targetHover) covSrc = targetHover;
+  const r = radius(), pulse = .5 + .5 * Math.sin(now / 180);
+  tiles.forEach(t => {
+    let col = null, op = 0;
+    if (t === targetHover){ col = 0x9dffa6; op = .55; }
+    else if (tcard && validTarget(tcard, t)){ col = 0xe6b84a; op = .25 + .25 * pulse; }
+    else if (covSrc && t !== covSrc && cheb(t, covSrc) <= r){ col = 0x8ff094; op = .35; }
+    else if (t === hover && !drag){ col = 0xffffff; op = .22; }
+    t.hl.visible = !!col;
+    if (col){ t.hl.material.color.setHex(col); t.hl.material.opacity = op; }
+  });
+  hdbs.forEach(b => {
+    const e = evalB(b);
+    if (b === targetHover || (b === hover && !drag)){ b.side.emissive.setHex(b === targetHover ? 0x6cff7a : 0xffffff); b.side.emissiveIntensity = .18; }
+    else { b.side.emissive.setHex(0xff5a1e); b.side.emissiveIntensity = heat && e.stress ? .1 * e.stress + .05 * Math.sin(now / 300 + b.gx) : 0; }
+    b.ring.visible = state.marked.includes(b);
+    if (b.ring.visible) b.ring.scale.setScalar(1 + .1 * Math.sin(now / 200));
+  });
+  renderer.render(scene, cam);
+}
+
+/* overlay canvas: labels, heat badges, shimmer and floating numbers, projected from 3D each frame */
+function drawFx(){
+  ctx.setTransform(RES, 0, 0, RES, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  if (!renderer) return;
+  const heat = heatLv(state.turn);
+  if (heat){
+    const [ox, oy] = proj(0, 0, 0);
+    const gr = ctx.createRadialGradient(ox, oy, 40, ox, oy, 520);
+    gr.addColorStop(0, `rgba(255,122,51,${.05 * heat})`); gr.addColorStop(1, 'rgba(255,122,51,0)');
+    ctx.fillStyle = gr; ctx.fillRect(0, 56, W, H);
+  }
+  const marks = [];
+  tiles.forEach(t => {
+    if (t.kind === 'hawker' || t.kind === 'cc') marks.push({p: tileScreen(t, .22), lab: t.kind === 'hawker' ? L().hawker : L().cc});
+    if (t.kind === 'hdb' && heat){ const e = evalB(t); if (e.stress > 0) marks.push({p: tileScreen(t, .12), stress: e.stress, t}); }
+  });
+  marks.sort((a, b) => (a.lab ? 1 : 0) - (b.lab ? 1 : 0) || b.p[2] - a.p[2]);   // badges far → near, place names always on top
+  marks.forEach(m => {
+    const [x, y] = m.p;
+    if (m.lab){ label(x, y - 8, m.lab); return; }
+    ctx.strokeStyle = `rgba(255,170,90,${.25 + .12 * m.stress})`; ctx.lineWidth = 1.5;
+    for (let i = -1; i <= 1; i++){
+      ctx.beginPath();
+      for (let s = 0; s <= 14; s++){ const yy = y - 4 - s * 1.4; const xx = x + i * 9 + Math.sin(now / 220 + s * .7 + i) * 2.5; s ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+    badge(x + 18, y - 6, m.stress);
+  });
+  floats = floats.filter(f => now - f.t0 < 1600);
+  floats.forEach(f => {
+    const k = (now - f.t0) / 1600, [x, y] = proj(f.wx, f.wy, f.wz);
+    ctx.globalAlpha = 1 - k * k; ctx.font = '700 15px "JetBrains Mono", "Noto Sans SC", monospace'; ctx.textAlign = 'center';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000a'; ctx.strokeText(f.text, x, y - k * 40);
+    ctx.fillStyle = f.color; ctx.fillText(f.text, x, y - k * 40); ctx.globalAlpha = 1; ctx.lineWidth = 1;
+  });
+}
+function label(x, y, s){
+  ctx.font = '500 10px "Noto Sans SC", sans-serif'; ctx.textAlign = 'center';
+  const w = ctx.measureText(s).width + 10;
+  ctx.fillStyle = '#0b1719cc'; ctx.beginPath(); ctx.roundRect(x - w/2, y - 9, w, 15, 7); ctx.fill();
+  ctx.fillStyle = '#e8e2d4'; ctx.fillText(s, x, y + 2);
+}
+function badge(x, y, n){
+  const s = L().heatBadge(n);
+  ctx.font = '700 10px "Noto Sans SC", sans-serif'; ctx.textAlign = 'center';
+  const w = Math.max(26, ctx.measureText(s).width + 10);
+  ctx.fillStyle = n >= 2 ? '#ff7a33' : '#ffb35e';
+  ctx.beginPath(); ctx.roundRect(x - w/2, y - 9, w, 16, 8); ctx.fill();
+  ctx.fillStyle = '#2a1300'; ctx.fillText(s, x, y + 3);
+}
+function rotateView(step){ VIEW.taz += step * Math.PI / 2; }
+function resetView(){ VIEW.taz = Math.round((VIEW.taz - Math.PI/4) / (2*Math.PI)) * 2*Math.PI + Math.PI/4; VIEW.tel = .62; VIEW.tzoom = 1; }
+
+/* ================= card rendering ================= */
+const ART = {
+  batch:'<rect width="132" height="74" fill="#8fc6d8"/><rect x="0" y="56" width="132" height="18" fill="#5c8a55"/><g><rect x="22" y="18" width="24" height="40" fill="#e9dcb8"/><rect x="54" y="10" width="24" height="48" fill="#cfe0ea"/><rect x="86" y="20" width="24" height="38" fill="#f1cdb4"/></g><g fill="#4fa255"><rect x="22" y="14" width="24" height="5"/><rect x="54" y="6" width="24" height="5"/><rect x="86" y="16" width="24" height="5"/><rect x="24" y="28" width="20" height="2"/><rect x="24" y="40" width="20" height="2"/><rect x="56" y="22" width="20" height="2"/><rect x="56" y="36" width="20" height="2"/><rect x="88" y="32" width="20" height="2"/><rect x="88" y="44" width="20" height="2"/></g>',
+  tree:'<rect width="132" height="74" fill="#a7d4a2"/><ellipse cx="66" cy="66" rx="70" ry="14" fill="#5c9a55"/><path d="M40 60 L52 22 L64 60Z" fill="#3e8443"/><path d="M52 22 L64 60 L58 60Z" fill="#2f6b34"/><path d="M70 62 L86 14 L102 62Z" fill="#4f9a52"/><path d="M86 14 L102 62 L94 62Z" fill="#3e8443"/><circle cx="26" cy="20" r="9" fill="#ffe08a"/>',
+  bolt:'<rect width="132" height="74" fill="#3b2a1f"/><circle cx="104" cy="18" r="13" fill="#ff8d3a"/><circle cx="104" cy="18" r="20" fill="#ff8d3a33"/><path d="M60 8 L44 40 L60 40 L52 68 L82 30 L64 30 L74 8Z" fill="#ffd24a" stroke="#7a4b10" stroke-width="2"/>',
+  cool:'<rect width="132" height="74" fill="#2f5560"/><rect x="26" y="30" width="80" height="34" fill="#7cc0b6"/><path d="M20 32 L66 12 L112 32Z" fill="#3c7a73"/><g stroke="#c9f3ff" stroke-width="2" fill="none"><path d="M50 46 h32 M66 38 v16 M56 40 l20 12 M76 40 l-20 12"/></g>',
+  stop:'<rect width="132" height="74" fill="#3b2826"/><circle cx="66" cy="37" r="24" fill="none" stroke="#e7c8bf" stroke-width="5"/><path d="M50 53 L82 21" stroke="#e7c8bf" stroke-width="5"/><text x="66" y="42" text-anchor="middle" font-size="12" fill="#e7c8bf" opacity=".6">S$</text>',
+  visit:'<rect width="132" height="74" fill="#7b5a44"/><rect x="18" y="10" width="40" height="64" fill="#e9dcb8"/><rect x="24" y="18" width="10" height="10" fill="#ff8d3a"/><rect x="40" y="18" width="10" height="10" fill="#6d5546"/><rect x="24" y="36" width="10" height="10" fill="#6d5546"/><rect x="40" y="36" width="10" height="10" fill="#ff8d3a"/><circle cx="86" cy="34" r="8" fill="#f2eee3"/><path d="M74 66 c0-14 6-22 12-22 s12 8 12 22z" fill="#3f86a8"/><rect x="98" y="40" width="14" height="18" rx="2" fill="#f2eee3"/>',
+  saver:'<rect width="132" height="74" fill="#26414a"/><rect x="18" y="26" width="96" height="40" fill="#c9b79a"/><g fill="#1d3a55" stroke="#8fd2e2" stroke-width="1"><path d="M22 22 L50 12 L74 12 L46 22Z"/><path d="M58 22 L86 12 L110 12 L82 22Z"/></g><path d="M66 36 a12 12 0 1 0 0.1 0" fill="none" stroke="#6cc46f" stroke-width="4"/><path d="M60 46 l6 6 l10-12" fill="none" stroke="#6cc46f" stroke-width="4"/>',
+  fund:'<rect width="132" height="74" fill="#2c2848"/><ellipse cx="66" cy="62" rx="56" ry="10" fill="#4f9a52"/><path d="M66 60 c-20-6-28-30-4-46 c24 16 16 40 4 46z" fill="#6cc46f"/><path d="M66 60 V24" stroke="#2f6b34" stroke-width="2"/><g stroke="#b7a8ff" fill="none" stroke-width="2" opacity=".8"><circle cx="66" cy="40" r="30"/><circle cx="66" cy="40" r="38" stroke-dasharray="3 5"/></g>',
+  coin:'<rect width="132" height="74" fill="#2a3a2f"/><g fill="#e6b84a" stroke="#7b4f12" stroke-width="2"><ellipse cx="50" cy="56" rx="20" ry="7"/><ellipse cx="50" cy="48" rx="20" ry="7"/><ellipse cx="50" cy="40" rx="20" ry="7"/><ellipse cx="86" cy="52" rx="20" ry="7"/><ellipse cx="86" cy="44" rx="20" ry="7"/></g><path d="M86 30 V10 M78 18 l8-8 8 8" stroke="#6cc46f" stroke-width="3" fill="none"/>',
+  shade:'<rect width="132" height="74" fill="#d9a066"/><circle cx="110" cy="12" r="10" fill="#fff1b8"/><rect x="18" y="40" width="96" height="26" fill="#c9b79a"/><path d="M10 42 L66 18 L122 42Z" fill="#4f9a52"/><g fill="#6d5546"><rect x="30" y="48" width="12" height="18"/><rect x="60" y="48" width="12" height="18"/><rect x="90" y="48" width="12" height="18"/></g>',
+};
+function kwOf(card){
+  const c = CARDS[card.key], k = [];
+  if (c.event) k.push('event');
+  if (c.persist) k.push('persist');
+  if (c.stops) k.push('stop');
+  if (c.retain) k.push('retain');
+  if (c.exhaust) k.push('exhaust');
+  return k;
+}
+function cardHTML(card){
+  const c = CARDS[card.key], T = L();
+  const tags = [c.retain && T.kw.retain[0], c.exhaust && T.kw.exhaust[0]].filter(Boolean).map(s => `<span>${s}</span>`).join('');
+  const extra = c.persist ? T.givesStop(cname(POLICY[c.persist].stop)) : (c.stops ? T.stopExhaust : '');
+  const ev = c.event ? `<div class="ribbon">${T.ribbon}</div>` : '';
+  return `<div class="cf"><div class="cost">${c.cost}</div>${ev}<div class="cname">${cname(card.key)}</div>
+    <div class="art"><svg viewBox="0 0 132 74" preserveAspectRatio="xMidYMid slice">${ART[c.art]}</svg></div>
+    <div class="ctype">${T.type[c.type]}${c.persist ? T.typeOngoing : ''}</div>
+    <div class="ctext"><div>${ctext(card.key)}${extra ? ' ' + extra : ''}</div></div>
+    <div class="ctags">${tags}</div></div>`;
+}
+const els = new Map();
+function cardEl(card){
+  let el = els.get(card.uid);
+  if (!el){
+    el = document.createElement('div');
+    el.className = 'card t-' + CARDS[card.key].type;
+    el.innerHTML = cardHTML(card);
+    el.style.transform = `translate(60px,710px) scale(.25) rotate(-20deg)`;
+    el.style.opacity = '0';
+    $('hand').appendChild(el); els.set(card.uid, el);
+    el.getBoundingClientRect();
+  }
+  return el;
+}
+
+/* ================= hand layout (Slay the Spire style fan) ================= */
+let hoverIdx = -1, drag = null, pointer = [0,0];
+function slots(){
+  const n = state.hand.length, spread = Math.min(112, 620 / Math.max(n, 1));
+  return state.hand.map((c, i) => {
+    const o = i - (n - 1) / 2;
+    return {x: 640 + o*spread, y: 684 + o*o*4.5, r: o * Math.min(5, 26 / n)};
+  });
+}
+function layoutHand(){
+  const S = slots();
+  state.hand.forEach((card, i) => {
+    const el = cardEl(card), s = S[i];
+    el.style.opacity = '1';
+    const c = CARDS[card.key], ok = c.cost <= state.pp && !state.busy;
+    el.classList.toggle('playable', ok); el.classList.toggle('nope', c.cost > state.pp);
+    if (drag && drag.card === card){
+      el.classList.add('dragging');
+      let x = pointer[0], y = pointer[1];
+      if (c.target && pointer[1] < 560){ x = 640; y = 560; }
+      el.style.transform = `translate(${x}px,${y}px) scale(1.1)`;
+      el.style.zIndex = 100; return;
+    }
+    el.classList.remove('dragging');
+    let x = s.x, y = s.y, r = s.r, sc = 1, z = i;
+    if (hoverIdx >= 0 && !drag){
+      if (i === hoverIdx){ y = 760 - 224*1.32/2 - 4; r = 0; sc = 1.32; z = 50; }
+      else { const d = i - hoverIdx; x += Math.sign(d) * (46 / Math.abs(d)); }
+    }
+    el.style.zIndex = z;
+    el.style.transform = `translate(${x}px,${y}px) rotate(${r}deg) scale(${sc})`;
+  });
+  showKw();
+}
+function showKw(){
+  const tip = $('kwtip');
+  if (hoverIdx < 0 || drag || !state.hand[hoverIdx]){ tip.hidden = true; return; }
+  const card = state.hand[hoverIdx], k = kwOf(card);
+  if (!k.length){ tip.hidden = true; return; }
+  tip.innerHTML = k.map(w => `<div><b>${L().kw[w][0]}</b>${L().kw[w][1]}</div>`).join('');
+  const x = slots()[hoverIdx].x;
+  tip.style.left = (x + 116 + 210 > W ? x - 116 - 210 : x + 116) + 'px';
+  tip.style.top = (lang === 'en' ? 420 : 460) + 'px';
+  tip.hidden = false;
+}
+function handIndexAt(x, y){
+  if (y < 590) return -1;
+  const S = slots(); let best = -1, bd = 1e9;
+  S.forEach((s, i) => { const d = Math.abs(s.x - x); if (d < bd){ bd = d; best = i; } });
+  const half = Math.min(112, 620 / Math.max(S.length,1)) / 2 + 30;
+  return bd <= Math.max(half, 40) ? best : -1;
+}
+
+/* ================= arrow (targeting) ================= */
+function drawArrow(){
+  const svg = $('arrow');
+  if (!drag || !CARDS[drag.card.key].target || pointer[1] >= 560){ svg.innerHTML = ''; return; }
+  const sx = 640, sy = 450, ex = pointer[0], ey = pointer[1];
+  const cx = sx + (ex - sx) * .1, cy = Math.min(sy, ey) - 140;
+  const col = targetHover ? '#b9ffbf' : '#ff8d6a';
+  let out = '';
+  const N = 16;
+  for (let i = 1; i < N; i++){
+    const t = i / N, x = (1-t)*(1-t)*sx + 2*(1-t)*t*cx + t*t*ex, y = (1-t)*(1-t)*sy + 2*(1-t)*t*cy + t*t*ey;
+    out += `<circle cx="${x}" cy="${y}" r="${2 + t*5}" fill="${col}" stroke="#0008" stroke-width="1.5"/>`;
+  }
+  const t = .97, dx = 2*(1-t)*(cx-sx) + 2*t*(ex-cx), dy = 2*(1-t)*(cy-sy) + 2*t*(ey-cy);
+  const a = Math.atan2(dy, dx) * 180 / Math.PI;
+  out += `<g transform="translate(${ex},${ey}) rotate(${a})"><path d="M8 0 L-16 -14 L-10 0 L-16 14Z" fill="${col}" stroke="#000a" stroke-width="2"/></g>`;
+  svg.innerHTML = out;
+}
+function validTarget(card, t){
+  if (!t) return false;
+  const k = CARDS[card.key].target;
+  if (k === 'hdb') return t.kind === 'hdb' && [t, tileAt(t.gx-1,t.gy), tileAt(t.gx+1,t.gy)].some(b => b && b.kind === 'hdb' && !b.up);
+  if (k === 'empty') return t.kind === 'empty';
+  if (k === 'hawker') return t.kind === 'hawker' && !t.shaded;
+  return false;
+}
+
+/* ================= playing cards ================= */
+function canPlay(card){
+  const c = CARDS[card.key];
+  if (state.busy) return false;
+  if (c.cost > state.pp){ say(L().noPP, 'warn', true); return false; }
+  return true;
+}
+function say(msg, cls = 'warn', shakeOrb = false){
+  const t = $('toast'), d = document.createElement('div');
+  d.className = cls; d.textContent = msg; t.appendChild(d);
+  setTimeout(() => d.remove(), 2600);
+  if (shakeOrb){ const o = $('orb'); o.classList.remove('shake'); void o.offsetWidth; o.classList.add('shake'); }
+}
+function pushFloat(t, text, color){ floats.push({wx: tx(t), wy: (t.topY || .12) + .35, wz: tz(t), text, color, t0: performance.now()}); }
+function play(card, target){
+  const c = CARDS[card.key], T = L();
+  state.pp -= c.cost;
+  state.hand = state.hand.filter(h => h !== card);
+  const el = els.get(card.uid);
+  el.classList.remove('dragging','playable'); el.classList.add('flying');
+  el.style.zIndex = 200;
+  el.style.transform = `translate(640px,330px) scale(1.15)`;
+  switch (card.key){
+    case 'batch': {
+      const group = [target, tileAt(target.gx-1,target.gy), tileAt(target.gx+1,target.gy)].filter(b => b && b.kind === 'hdb' && !b.up);
+      const affordable = group.slice(0, Math.floor(state.money / 60));
+      affordable.forEach(b => { b.up = true; state.money -= 60; pushFloat(b, T.fUpg, '#b9ffbf'); });
+      if (affordable.length < group.length) say(T.partial);
+      break;
+    }
+    case 'plant': target.kind = 'park'; pushFloat(target, T.fPark, '#b9ffbf'); break;
+    case 'subsidy': case 'fund': {
+      state.policies[c.persist] = true;
+      const stop = newCard(POLICY[c.persist].stop); state.hand.push(stop);
+      say(T.started(cname(card.key), cname(stop.key)), 'good');
+      break;
+    }
+    case 'stopSubsidy': case 'stopFund': state.policies[c.stops] = false; say(T.stopped(cname(POLICY[c.stops].card)), 'good'); break;
+    case 'cool': state.cool = true; say(T.coolOn, 'good'); break;
+    case 'visit': {
+      drawCards(2);
+      state.marked = [...hdbs].sort((a, b) => evalB(b).stress - evalB(a).stress || evalB(a).actual - evalB(b).actual).slice(0, 3);
+      break;
+    }
+    case 'saver': state.saver = true; say(T.saverOn, 'good'); break;
+    case 'reserve': state.money += 50; say(T.reserveOn(money(50)), 'good'); break;
+    case 'shade': target.shaded = true; pushFloat(target, T.fShade, '#b9ffbf'); break;
+  }
+  const dest = c.exhaust ? state.exhaust : state.discard;
+  setTimeout(() => {
+    el.classList.add('flying');
+    el.style.opacity = '0';
+    el.style.transform = c.exhaust ? `translate(1150px,700px) scale(.2)` : `translate(1240px,710px) scale(.2) rotate(20deg)`;
+    setTimeout(() => { el.remove(); els.delete(card.uid); dest.push(card); render(); }, 380);
+  }, 420);
+  render();
+}
+function drawCards(n){
+  for (let i = 0; i < n; i++){
+    if (!state.draw.length){
+      if (!state.discard.length) break;
+      state.draw = shuffle(state.discard); state.discard = [];
+      say(L().reshuffle, 'good');
+    }
+    if (state.hand.length >= 10){ state.discard.push(state.draw.pop()); continue; }
+    state.hand.push(state.draw.pop());
+  }
+}
+
+/* ================= turn flow ================= */
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function endTurn(){
+  if (state.busy || state.over) return;
+  cancelDrag(); closePop();
+  state.busy = true; hoverIdx = -1; render();
+  const keep = [], gone = [];
+  state.hand.forEach(c => (CARDS[c.key].retain ? keep : gone).push(c));
+  gone.forEach((c, i) => {
+    const el = els.get(c.uid);
+    el.classList.add('flying'); el.style.transitionDelay = (i*60) + 'ms';
+    el.style.transform = `translate(1240px,710px) scale(.2) rotate(30deg)`; el.style.opacity = '0';
+    setTimeout(() => { el.remove(); els.delete(c.uid); }, 450 + i*60);
+  });
+  state.hand = keep; state.discard.push(...gone);
+  render();
+  await wait(500);
+
+  const lines = finance();
+  const delta = sum(lines);
+  state.money += delta;
+  const popLines = [];
+  hdbs.forEach(b => {
+    const e = evalB(b);
+    if (e.actual < 50){ b.low++; if (b.low >= 2){ const d = Math.round(b.pop * .04); b.pop -= d; pushFloat(b, L().fOut(d), '#ff9a8a'); popLines.push(b); } else pushFloat(b, L().fLive(e.actual), '#ffb35e'); }
+    else { b.low = 0; if (e.actual >= 68 && b.pop < b.cap){ const d = Math.min(b.cap - b.pop, Math.round(b.cap * .03)); b.pop += d; pushFloat(b, L().fIn(d), '#b9ffbf'); } }
+  });
+  const live = community();
+  showReport(lines, delta, live, popLines);
+  if (state.goal === 'active' && live >= 70){
+    state.goal = 'done';
+    if (state.turn < GOAL_DEADLINE){ state.money += 150; state.ppMax += 1; say(L().goalEarly(money(150)), 'good'); }
+    else say(L().goalDone, 'good');
+  } else if (state.goal === 'active' && state.turn >= GOAL_DEADLINE){
+    state.goal = 'fail'; state.ppPenalty = 1; state.remedial = {need: 3, done: 0, deadline: state.turn + 2, base: hdbs.filter(b => b.up).length};
+    say(L().goalFail);
+  }
+  if (state.remedial && !state.remedial.closed){
+    state.remedial.done = hdbs.filter(b => b.up).length - state.remedial.base;
+    if (state.remedial.done >= state.remedial.need){ state.remedial.closed = 'done'; state.money += 60; say(L().remDone(money(60)), 'good'); }
+    else if (state.turn >= state.remedial.deadline){ state.remedial.closed = 'fail'; say(L().remFail); }
+  }
+  state.marked = []; state.cool = false;
+  render();
+  await wait(1700);
+  $('report').hidden = true;
+
+  const wasEvent = eventOn();
+  state.turn++;
+  state.prevLive = live;
+  if (state.turn > MAX_TURN){ state.over = true; showEnd(); state.busy = false; return; }
+  let evEnded = false;
+  if (wasEvent && !eventOn()){
+    evEnded = true;
+    // unused event-only cards are exhausted when the event ends; running policies are NOT stopped
+    const isEv = c => CARDS[c.key].event;
+    state.hand.filter(isEv).forEach(c => { const el = els.get(c.uid); el.style.setProperty('--t', el.style.transform); el.classList.add('burn'); setTimeout(() => { el.remove(); els.delete(c.uid); }, 700); });
+    const n = [...state.hand, ...state.draw, ...state.discard].filter(isEv).length;
+    state.hand = state.hand.filter(c => !isEv(c)); state.draw = state.draw.filter(c => !isEv(c)); state.discard = state.discard.filter(c => !isEv(c));
+    say(L().heatEnd(n));
+    if (state.policies.subsidy) setTimeout(() => say(L().subsidyStill), 600);
+    await wait(700);
+  }
+  state.pp = state.ppMax - state.ppPenalty; state.ppPenalty = 0;
+  drawCards(5);
+  state.busy = false;
+  render();
+  banner(evEnded);
+}
+function banner(evEnded){
+  const b = $('banner'), T = L();
+  $('bannerT').textContent = T.bannerT(state.turn);
+  $('bannerS').textContent = T.date(state.turn) + (eventOn() ? T.bannerHeat : evEnded ? T.bannerHeatEnd : '');
+  b.classList.toggle('heat', eventOn());
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+function showReport(lines, delta, live, popLines){
+  const r = $('report'), T = L();
+  const before = state.prevLive ?? live;
+  r.innerHTML = `<div class="src">${T.repSrc}</div><h4>${T.repTitle(state.turn)}</h4>
+    <ul>${lines.map(([k, v]) => `<li><span>${T.fin[k]}</span><span class="num delta ${v<0?'neg':'pos'}">${signed(v)}</span></li>`).join('')}
+    <li class="tot"><span>${T.repTotal}</span><span class="num delta ${delta<0?'neg':'pos'}">${signed(delta)}</span></li></ul>
+    <div class="foot">${T.repFoot(before.toFixed(1), live.toFixed(1), popLines.map(b => 'Blk ' + b.blk))}</div>`;
+  r.hidden = false;
+}
+function showEnd(){
+  const T = L(), live = community(), pop = hdbs.reduce((a,b)=>a+b.pop,0), ups = hdbs.filter(b=>b.up).length;
+  const o = $('overlay');
+  o.innerHTML = `<h2>${T.endTitle}</h2><div class="sub">${T.endSub}</div>
+    <div class="panel" style="width:420px"><div class="kv"><span>${T.endLive}</span><b class="num">${live.toFixed(1)}</b></div>
+    <div class="kv"><span>${T.endPop}</span><b class="num">${pop.toLocaleString()}</b></div><div class="kv"><span>${T.endFin}</span><b class="num">${money(state.money)}</b></div>
+    <div class="kv"><span>${T.endUps}</span><b class="num">${ups} / ${hdbs.length}</b></div>
+    <div class="kv"><span>${T.endParks}</span><b class="num">${tiles.filter(t=>t.kind==='park').length}</b></div></div>
+    <button class="close" id="again" type="button" style="position:static;margin-top:20px">${T.again}</button>`;
+  o.hidden = false;
+  $('again').onclick = () => { o.hidden = true; els.forEach(e => e.remove()); els.clear(); init(); reset3D(); render(); banner(); };
+}
+
+/* ================= HUD render ================= */
+function render(){
+  sync3D();
+  const T = L(), heat = heatLv(state.turn), live = community(), fl = finance(), fd = sum(fl);
+  const pop = hdbs.reduce((a,b)=>a+b.pop,0), cap = hdbs.reduce((a,b)=>a+b.cap,0);
+  stage.classList.toggle('hot', !!heat);
+  $('rMoney').textContent = money(state.money);
+  const md = $('rMoneyD'); md.textContent = signed(fd) + T.perTurn; md.className = 'sub num delta ' + (fd < 0 ? 'neg' : 'pos');
+  $('rPop').textContent = `${pop.toLocaleString()} / ${cap.toLocaleString()}`;
+  $('rLive').textContent = live.toFixed(1);
+  $('dateV').textContent = T.date(state.turn);
+  $('turnV').textContent = T.turnOf(state.turn, MAX_TURN);
+  $('temp').classList.toggle('on', !!heat);
+  $('tempV').textContent = (31.2 + heat*1.7).toFixed(1) + '°C';
+  $('timeline').innerHTML = Array.from({length: MAX_TURN}, (_, i) => {
+    const t = i + 1; const c = ['tl', t < state.turn && 'past', t === state.turn && 'now', HEAT[t] && 'heat', t === GOAL_DEADLINE && 'goal'].filter(Boolean).join(' ');
+    return `<span class="${c}" title="${T.tlTitle(t, T.date(t), HEAT[t], t === GOAL_DEADLINE)}">${t === GOAL_DEADLINE ? '<i></i>' : ''}</span>`;
+  }).join('');
+  // event panel
+  const ep = $('eventPanel');
+  if (eventOn()){
+    const hi = hdbs.filter(b => evalB(b).stress >= 2).length;
+    const extra = -(fl.find(l => l[0] === 'heatPower') || [0,0])[1];
+    const evCards = [...state.hand, ...state.draw, ...state.discard].filter(c => CARDS[c.key].event).map(c => cname(c.key));
+    ep.className = 'panel event on';
+    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.evOn}</div><h3>${T.evTitle(heat)}</h3>
+      <div class="heatbar">${[1,2,3].map(i => `<i class="${i<=heat?'on':''}"></i>`).join('')}</div>
+      <p>${T.evDesc}</p>
+      <div class="kv"><span>${T.evUntil}</span><b>${T.turnsLeft(T.date(EVENT_END), EVENT_END - state.turn + 1)}</b></div>
+      <div class="kv"><span>${T.evHot}</span><b class="num">${T.ofBlocks(hi, hdbs.length)}</b></div>
+      <div class="kv"><span>${T.evExtra}</span><b class="num">−${money(extra)}${T.perTurn}</b></div>
+      ${evCards.length ? `<div class="grant">${T.evGrant(evCards)}</div>` : ''}`;
+  } else {
+    ep.className = 'panel event';
+    ep.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.evOff}</div><h3>${T.evNone}</h3>
+      <p>${state.turn > EVENT_END ? T.evEnded(T.date(EVENT_END)) : ''}${state.policies.subsidy ? T.evSubsidyLeft : T.evCalm}</p>`;
+  }
+  // goal panel
+  const gp = $('goalPanel');
+  const pct = Math.min(100, live / 70 * 100), ups = hdbs.filter(b => b.up).length;
+  const gstate = state.goal === 'done' ? T.gDone : state.goal === 'fail' ? T.gFail : T.gDue(T.date(GOAL_DEADLINE), GOAL_DEADLINE - state.turn + 1);
+  gp.className = 'panel goal ' + (state.goal === 'done' ? 'done' : state.goal === 'fail' ? 'fail' : '');
+  const rm = state.remedial;
+  gp.innerHTML = `<div class="eyebrow"><span class="dot"></span>${T.goalEyebrow}</div><h3>${T.goalTitle}</h3>
+    <p>${T.goalDesc(GOAL_DEADLINE)}</p>
+    <div class="bar goalbar"><i style="width:${pct}%"></i></div>
+    <div class="kv"><span class="num">${live.toFixed(1)} / 70</span><b>${gstate}</b></div>
+    ${state.goal === 'active' ? `<div class="reward"><span>${T.rEarly}</span><span>${T.rEarlyV(money(150))}</span><span>${T.rMiss}</span><span>${T.rMissV}</span></div>` : ''}
+    ${rm ? `<div class="grant" style="color:${rm.closed==='done'?'#b9f0bb':'var(--heat-soft)'}">${T.rem(rm.deadline, Math.min(rm.done, rm.need), rm.need, rm.closed)}</div>` : ''}
+    <div class="kv"><span>${T.upgCount}</span><b class="num">${T.ofBlocks(ups, hdbs.length)}</b></div>`;
+  // powers
+  const pw = Object.keys(POLICY).filter(k => state.policies[k]);
+  $('powers').innerHTML = `<h4>${T.powersH}</h4>` + (pw.length ? pw.map(k => {
+    const p = POLICY[k];
+    const warn = k === 'subsidy' && !heat ? `<small class="warn">${T.subsidyWeak}</small>` : '';
+    return `<div class="power ${p.ev?'ev':''}"><span class="pi">${T.powerBadge}</span><div><b>${cname(p.card)}</b><small class="num">−${money(p.cost)}${T.perTurnSp}</small>${warn}</div></div>`;
+  }).join('') : `<div class="empty">${T.powersEmpty}</div>`) +
+  (state.saver ? `<div class="power"><span class="pi">${T.permBadge}</span><div><b>${T.saverName}</b><small>${T.saverDesc}</small></div></div>` : '');
+  // piles & energy
+  $('ppV').textContent = `${state.pp}/${state.ppMax}`;
+  $('orb').classList.toggle('empty', state.pp <= 0);
+  $('drawN').textContent = state.draw.length; $('discN').textContent = state.discard.length;
+  $('exhN').textContent = state.exhaust.length; $('exhPile').hidden = !state.exhaust.length;
+  $('endTurn').disabled = state.busy;
+  els.forEach((el, id) => { if (!state.hand.some(c => c.uid === id) && !el.classList.contains('flying') && !el.classList.contains('burn')) { el.remove(); els.delete(id); } });
+  layoutHand();
+  if ($('adv').classList.contains('open')) renderAdv();
+}
+
+/* ================= AI advisor ================= */
+function renderAdv(){
+  const T = L(), heat = heatLv(state.turn), live = community();
+  const hot = hdbs.map(b => [b, evalB(b)]).filter(([, e]) => e.stress >= 2).sort((a, b) => b[1].stress - a[1].stress);
+  const fd = sum(finance());
+  const eng = [T.eLive(live.toFixed(1)), T.eFin(signed(fd))];
+  if (heat) eng.push(T.eHot(hot.length, hot.slice(0, 4).map(([b]) => 'Blk ' + b.blk), hot.length > 4));
+  const inHand = k => state.hand.some(c => c.key === k);
+  if (inHand('subsidy') && !state.policies.subsidy) eng.push(T.eSub(live.toFixed(1), community({subsidy: true}).toFixed(1), money(POLICY.subsidy.cost)));
+  if (inHand('cool') && !state.cool && heat) eng.push(T.eCool(live.toFixed(1), community({cool: true}).toFixed(1)));
+  if (state.policies.subsidy && !heat) eng.push(T.eSubWeak(money(POLICY.subsidy.cost)));
+  const unc = hdbs.filter(b => !b.up && !evalB(b).cov);
+  const ai = [];
+  if (heat && hot.length >= 4) ai.push(T.aHot);
+  if (heat && inHand('subsidy') && !state.policies.subsidy) ai.push(T.aSub);
+  if (!heat && state.policies.subsidy) ai.push(T.aSubEnd);
+  if (unc.length) ai.push(T.aUnc(unc.length, unc.slice(0,3).map(b => 'Blk ' + b.blk)));
+  if (state.money < 200) ai.push(T.aLow);
+  if (!ai.length) ai.push(T.aCalm);
+  $('adv').innerHTML = `<h3><span class="eye"></span>${T.advisor}<button class="x" id="advX" type="button">${T.close}</button></h3>
+    <div class="advsec eng"><div class="tag"><span>${T.advEng}</span><span>${T.advEngR}</span></div><ul>${eng.map(s => `<li>${s}</li>`).join('')}</ul></div>
+    <div class="advsec ai"><div class="tag"><span>${T.advAi}</span><span>${T.advAiR}</span></div><ul>${ai.map(s => `<li>${s}</li>`).join('')}</ul>
+    <button class="hl" id="advHl" type="button">${T.advHl}</button></div>
+    <p class="note" style="margin-top:12px">${T.advNote}</p>`;
+  $('advX').onclick = () => $('adv').classList.remove('open');
+  $('advHl').onclick = () => {
+    const keys = heat ? ['subsidy','cool','batch','plant'] : state.policies.subsidy ? ['stopSubsidy','plant','batch'] : ['plant','batch','fund'];
+    state.hand.forEach(c => { if (keys.includes(c.key)){ const el = els.get(c.uid); el.classList.add('glow'); setTimeout(() => el.classList.remove('glow'), 2400); } });
+  };
+}
+$('advBtn').onclick = () => { const a = $('adv'); a.classList.toggle('open'); if (a.classList.contains('open')) renderAdv(); };
+
+/* ================= tile tooltip & build popover ================= */
+function showTip(t, x, y){
+  const tip = $('tip'), T = L();
+  if (!t || drag || !$('pop').hidden){ tip.hidden = true; return; }
+  const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+  let h = '';
+  if (t.kind === 'hdb'){
+    const e = evalB(t);
+    h = `<h5>${T.tBlk(t.blk)}</h5>` + row(T.tRes, `${t.pop} / ${t.cap}`, 'num') + row(T.tUpg, e.up ? T.tDone : T.tNot) + row(T.tCov, e.cov ? T.yes : T.no) + row(T.tBase, e.base, 'num') +
+      (heatLv(state.turn) ? `<div class="row"><span>${T.tStress}</span><b class="num" style="color:var(--heat-soft)">${e.stress}</b></div>` + row(T.tPen, `−${e.penalty}${e.subsidy && e.stress>=2 ? T.tHalved : ''}`, 'num') : '') +
+      row(T.tActual, e.actual, 'num') + (e.up ? '' : `<div class="hint">${T.tClickUpg(money(BASE_UPG_COST))}</div>`);
+  } else if (t.kind === 'empty') h = `<h5>${T.tEmpty}</h5>` + row(T.tParkCost, money(PARK_COST), 'num') + `<div class="hint">${T.tClickBuild}</div>`;
+  else if (t.kind === 'park') h = `<h5>${T.tPark}</h5>` + row(T.tRadius, T.tiles(radius()), 'num') + row(T.tUpkeep, money(4) + T.perTurn, 'num');
+  else if (t.kind === 'hawker') h = `<h5>${T.hawker}</h5>` + row(T.tKind, T.tAmenity) + row(T.tShade, t.shaded ? T.tDone : T.tNotYet);
+  else if (t.kind === 'cc') h = `<h5>${T.cc}</h5>` + row(T.tKind, T.tFacility);
+  else if (t.kind === 'carpark') h = `<h5>${T.tCarpark}</h5>` + row(T.tConvert, money(CARPARK_COST), 'num') + `<div class="hint">${T.tClickView}</div>`;
+  else { tip.hidden = true; return; }
+  tip.innerHTML = h; tip.hidden = false;
+  tip.style.left = Math.min(x + 18, W - 260) + 'px'; tip.style.top = Math.min(y + 12, 520) + 'px';
+}
+let popTile = null;
+function openPop(t){
+  const p = $('pop'), T = L(); let title = '', body = '', cost = 0, act = null;
+  if (t.kind === 'hdb' && !t.up){ title = T.pUpgT(t.blk); body = T.pUpgB; cost = BASE_UPG_COST; act = () => { t.up = true; pushFloat(t, L().fUpg, '#b9ffbf'); }; }
+  else if (t.kind === 'empty'){ title = T.pParkT; body = T.pParkB(radius(), money(4)); cost = PARK_COST; act = () => { t.kind = 'park'; pushFloat(t, L().fPark, '#b9ffbf'); }; }
+  else if (t.kind === 'carpark'){ title = T.pCarT; body = T.pCarB; cost = CARPARK_COST; act = () => { t.kind = 'park'; pushFloat(t, L().fPark, '#b9ffbf'); }; }
+  else return;
+  popTile = t;
+  const [x, y] = tileScreen(t);
+  p.innerHTML = `<h5>${title}</h5><p>${body}</p><div class="acts"><button type="button" id="popGo" ${state.money < cost ? 'disabled' : ''}>${T.build(money(cost))}</button><button type="button" class="ghost" id="popX">${T.cancel}</button></div>`;
+  p.style.left = clamp(x - 120, 310, W - 430) + 'px';
+  p.style.top = clamp(y - 190, 64, 400) + 'px';
+  p.hidden = false; $('tip').hidden = true;
+  $('popGo').onclick = () => { state.money -= cost; act(); closePop(); render(); };
+  $('popX').onclick = closePop;
+}
+function closePop(){ $('pop').hidden = true; popTile = null; }
+
+/* ================= input ================= */
+function toStage(e){ const r = stage.getBoundingClientRect(); return [(e.clientX - r.left) / SC, (e.clientY - r.top) / SC]; }
+let down = null, orbit = null;
+stage.addEventListener('pointermove', e => {
+  pointer = toStage(e);
+  if (down && !drag && Math.hypot(pointer[0]-down.x, pointer[1]-down.y) > 8) startDrag(down.card);
+  if (orbit){
+    const dx = pointer[0] - orbit.x, dy = pointer[1] - orbit.y;
+    if (!orbit.moved && Math.hypot(dx, dy) > 5){ orbit.moved = true; closePop(); $('tip').hidden = true; hover = null; }
+    if (orbit.moved){ VIEW.taz = orbit.az - dx * .008; VIEW.tel = clamp(orbit.el + dy * .006, .38, 1.3); stage.style.cursor = 'grabbing'; return; }
+  }
+  if (drag){
+    const c = CARDS[drag.card.key];
+    targetHover = c.target && pointer[1] < 560 ? (t => validTarget(drag.card, t) ? t : null)(pick(...pointer)) : null;
+    $('playline').style.display = c.target ? 'none' : 'block';
+    layoutHand(); drawArrow(); return;
+  }
+  const hi = state.busy || !$('overlay').hidden ? -1 : handIndexAt(...pointer);
+  if (hi !== hoverIdx){ hoverIdx = hi; layoutHand(); }
+  hover = hi < 0 && e.target === canvas ? pick(...pointer) : null;
+  showTip(hover, ...pointer);
+  stage.style.cursor = hi >= 0 ? 'grab' : hover && ['hdb','empty','carpark'].includes(hover.kind) ? 'pointer' : '';
+});
+stage.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  pointer = toStage(e);
+  if (drag){ resolveDrag(); e.preventDefault(); return; }   // click-to-pick-up mode: second click resolves
+  if (state.busy) return;
+  const hi = handIndexAt(...pointer);
+  if (hi >= 0){ down = {x: pointer[0], y: pointer[1], card: state.hand[hi]}; e.preventDefault(); return; }
+  if (e.target === canvas){ orbit = {x: pointer[0], y: pointer[1], az: VIEW.taz, el: VIEW.tel, moved: false}; e.preventDefault(); }
+});
+stage.addEventListener('pointerup', e => {
+  pointer = toStage(e);
+  if (drag && drag.moved){ resolveDrag(); return; }
+  if (down && !drag){ startDrag(down.card, true); down = null; return; } // a simple click picks the card up
+  down = null;
+  if (orbit){
+    const o = orbit; orbit = null; stage.style.cursor = '';
+    if (o.moved) return;                                  // it was a camera drag, not a click
+    const t = pick(...pointer);
+    if (t && !state.busy && $('pop').hidden) openPop(t); else closePop();
+  }
+});
+stage.addEventListener('wheel', e => {
+  if (e.target !== canvas) return;
+  e.preventDefault();
+  VIEW.tzoom = clamp(VIEW.tzoom * Math.exp(-e.deltaY * .0012), .7, 2.4);
+}, {passive: false});
+document.querySelectorAll('#camCtl button').forEach(b => {
+  b.addEventListener('pointerdown', e => e.stopPropagation());
+  b.addEventListener('click', () => { const s = +b.dataset.cam; s ? rotateView(s) : resetView(); });
+});
+stage.addEventListener('contextmenu', e => { if (drag){ e.preventDefault(); cancelDrag(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ cancelDrag(); closePop(); $('adv').classList.remove('open'); $('overlay').hidden = true; }
+  if ((e.key === 'e' || e.key === 'E') && !e.repeat && $('overlay').hidden) endTurn();
+  if (e.key === 'ArrowLeft' && $('overlay').hidden) rotateView(-1);
+  if (e.key === 'ArrowRight' && $('overlay').hidden) rotateView(1);
+});
+function startDrag(card, clickMode = false){
+  if (!state.hand.includes(card)) return;
+  if (!canPlay(card)){ down = null; return; }
+  drag = {card, moved: !clickMode}; down = null; hoverIdx = -1;
+  closePop(); $('tip').hidden = true; $('kwtip').hidden = true;
+  if (!CARDS[card.key].target) $('playline').style.display = 'block';
+  layoutHand(); drawArrow();
+}
+function resolveDrag(){
+  const card = drag.card, c = CARDS[card.key];
+  let ok = false;
+  if (c.target){ if (targetHover){ const t = targetHover; finishDrag(); play(card, t); ok = true; } }
+  else if (pointer[1] < 500){ finishDrag(); play(card); ok = true; }
+  if (!ok) cancelDrag();
+}
+function finishDrag(){ drag = null; targetHover = null; $('playline').style.display = 'none'; $('arrow').innerHTML = ''; }
+function cancelDrag(){ if (!drag) return; finishDrag(); layoutHand(); }
+
+function pileView(name, list, sub){
+  const o = $('overlay'), T = L();
+  const cards = list === state.draw ? [...list].sort((a,b) => cname(a.key).localeCompare(cname(b.key), lang)) : [...list].reverse();
+  o.innerHTML = `<button class="close" id="ovX" type="button">${T.close}</button><h2>${name}</h2><div class="sub">${sub}</div>
+    <div class="grid">${cards.length ? cards.map(c => `<div class="card t-${CARDS[c.key].type}">${cardHTML(c)}</div>`).join('') : `<p class="empty">${T.vEmpty}</p>`}</div>`;
+  o.hidden = false; $('ovX').onclick = () => o.hidden = true;
+}
+$('drawPile').onclick = () => pileView(L().vDraw, state.draw, L().vDrawS(state.draw.length));
+$('discPile').onclick = () => pileView(L().vDisc, state.discard, L().vDiscS(state.discard.length));
+$('exhPile').onclick = () => pileView(L().vExh, state.exhaust, L().vExhS);
+$('endTurn').onclick = endTurn;
+['drawPile','discPile','exhPile','endTurn','advBtn'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
+['adv','pop','overlay','report'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
+['adv','pop','overlay','report'].forEach(id => $(id).addEventListener('pointerup', e => e.stopPropagation()));
+$('report').addEventListener('click', () => $('report').hidden = true);
+
+/* ================= boot ================= */
+function fit(){
+  const vw = innerWidth, vh = innerHeight, m = vw < 700 ? 8 : 16;
+  SC = Math.min((vw - m*2) / W, (vh - m*2) / H);
+  stage.style.transform = `translate(${(vw - W*SC)/2}px,${(vh - H*SC)/2}px) scale(${SC})`;
+  RES = Math.min(2.5, Math.max(1, SC * (devicePixelRatio || 1)));
+  $('fx').width = W * RES; $('fx').height = H * RES;
+  if (renderer){ renderer.setPixelRatio(RES); renderer.setSize(W, H, false); }
+}
+addEventListener('resize', fit);
+function loop(ts){ now = ts; frame3D(); drawFx(); requestAnimationFrame(loop); }
+init(); applyStatic(); const ok3D = init3D(); fit(); render();
+if (!ok3D) setTimeout(() => say(lang === 'zh' ? '3D 地图无法加载：浏览器不支持 WebGL 或脚本被拦截' : '3D map could not load: WebGL is unavailable or the script was blocked'), 800);
+requestAnimationFrame(loop);
+setTimeout(() => banner(), 300);
+})();
+</script>
+</body>
+</html>
